@@ -49,24 +49,47 @@ Thư mục Skill nằm tại `.agent/skills/affiliate-video-script-voice/`. Khi 
 4. **Bước 4 (Xuất 2 file):** Lưu vào thư mục `output/<slug-san-pham>/`:
    - `shotlist.md`: Bảng phân cảnh quay + 2 Hook test A/B.
    - `voice.txt`: Thuần văn bản thoại đã chuẩn hóa theo `references/tts-rules.md`.
-5. **Bước 5 (Tạo âm thanh TTS):** Tự động gọi script:
+5. **Bước 5 (Tạo âm thanh TTS):** Tự động gọi script với cơ chế RANDOM giọng ngẫu nhiên:
    ```bash
-   python scripts/generate_voice.py --input "output/<slug>/voice.txt" --output "output/<slug>/voice.mp3" --speed 1.25
+   python scripts/generate_voice.py --input "output/<slug>/voice.txt" --output "output/<slug>/voice.mp3" --voice random --speed 1.25
    ```
 
 ---
 
-## 🎙️ Sử dụng Script Giọng đọc riêng lẻ
+## 🎙️ Kho 10 Giọng đọc Tiếng Việt & Sử dụng Script riêng lẻ
 
-Bạn cũng có thể chạy trực tiếp script TTS cho bất kỳ file văn bản nào:
+Script hỗ trợ kho **10 giọng đọc tiếng Việt đa dạng phong cách** phù hợp từng dòng sản phẩm khác nhau.
+
+### Danh sách 10 giọng đọc có sẵn:
+
+| Tên giọng (`--voice`) | Giới tính | Phong cách & Sản phẩm phù hợp |
+| :--- | :--- | :--- |
+| `nu-truyen-cam` | Nữ | Miền Bắc ngọt ngào, truyền cảm (Gia dụng, Mẹ bé, Mỹ phẩm) |
+| `nam-dut-khoat` | Nam | Miền Bắc dứt khoát, tin cậy (Gia dụng, Dụng cụ tiện ích) |
+| `nu-hien-dai` | Nữ | Hiện đại, phát âm mượt mà (Phụ kiện, Decor, Công nghệ nhẹ) |
+| `nam-cong-nghe` | Nam | Trẻ trung, review đồ điện tử (Tai nghe, Cáp sạc, Smart device) |
+| `nu-tuoi-tan` | Nữ | Năng động, vui tươi (Thời trang, Đồ ăn vặt, Phụ kiện xinh) |
+| `nam-soi-noi` | Nam | Hào hứng, lôi cuốn (Đồ chơi, Phụ kiện xe, Thể thao) |
+| `nu-ro-chu` | Nữ | Tròn vành rõ chữ, tự nhiên, ổn định tuyệt đối (Review tổng hợp) |
+| `nam-tram-am` | Nam | Trầm ấm áp, thuyết phục cao (Đồ gia đình, Sản phẩm giá trị) |
+| `nu-nhi-nhanh` | Nữ | Trẻ trung, bắt tai, hợp tệp học sinh sinh viên Gen Z |
+| `nam-tin-cay` | Nam | Chững chạc, uy tín, tạo độ tin tưởng chốt đơn cao |
+
+### Cách sử dụng dòng lệnh:
+
 ```bash
-python scripts/generate_voice.py \
-  --input "duong/dan/file.txt" \
-  --output "duong/dan/file.mp3" \
-  --speed 1.25 \
-  --engine auto
+# 1. Triển khai thực tế: Chọn giọng NGẪU NHIÊN trong 10 giọng (Mặc định)
+python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice random
+
+# 2. Chọn ngẫu nhiên 1 giọng Nữ (Mỹ phẩm, Gia dụng, Mẹ bé)
+python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nu
+
+# 3. Chọn ngẫu nhiên 1 giọng Nam (Công nghệ, Dụng cụ, Đồ chơi)
+python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nam
+
+# 4. Chỉ định đích danh một giọng cố định:
+python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nu-hien-dai --speed 1.25
+
+# 5. Xem danh sách toàn bộ giọng:
+python scripts/generate_voice.py --list-voices
 ```
-- `--speed`: Tốc độ đọc (mặc định `1.25x` nhanh hơn 25%, tự động cắt tỉa khoảng lặng thừa, giữ nguyên cao độ tự nhiên). Có thể chỉnh `1.15`, `1.2`, `1.3`...
-- `--engine`: `auto` (thử Edge TTS, lỗi tự chuyển gTTS), `edge` hoặc `gtts`.
-- Giọng nữ mặc định: `vi-VN-HoaiMyNeural`
-- Giọng nam: `vi-VN-NamMinhNeural`
