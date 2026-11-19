@@ -51,7 +51,7 @@ Thư mục Skill nằm tại `.agent/skills/affiliate-video-script-voice/`. Khi 
    - `voice.txt`: Thuần văn bản thoại đã chuẩn hóa theo `references/tts-rules.md`.
 5. **Bước 5 (Tạo âm thanh TTS):** Tự động gọi script:
    ```bash
-   python scripts/generate_voice.py --input "output/<slug>/voice.txt" --output "output/<slug>/voice.mp3"
+   python scripts/generate_voice.py --input "output/<slug>/voice.txt" --output "output/<slug>/voice.mp3" --speed 1.25
    ```
 
 ---
@@ -63,8 +63,10 @@ Bạn cũng có thể chạy trực tiếp script TTS cho bất kỳ file văn b
 python scripts/generate_voice.py \
   --input "duong/dan/file.txt" \
   --output "duong/dan/file.mp3" \
-  --voice "vi-VN-HoaiMyNeural" \
-  --rate "+10%"
+  --speed 1.25 \
+  --engine auto
 ```
+- `--speed`: Tốc độ đọc (mặc định `1.25x` nhanh hơn 25%, tự động cắt tỉa khoảng lặng thừa, giữ nguyên cao độ tự nhiên). Có thể chỉnh `1.15`, `1.2`, `1.3`...
+- `--engine`: `auto` (thử Edge TTS, lỗi tự chuyển gTTS), `edge` hoặc `gtts`.
 - Giọng nữ mặc định: `vi-VN-HoaiMyNeural`
 - Giọng nam: `vi-VN-NamMinhNeural`

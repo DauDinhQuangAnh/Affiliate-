@@ -90,19 +90,21 @@ Tạo thư mục theo slug sản phẩm: `output/<slug-ten-san-pham>/` (ví dụ
 
 ### Bước 5: Chạy Tool Giọng đọc (TTS)
 
-Sau khi lưu file `voice.txt`, tự động chạy script `scripts/generate_voice.py` để sinh file âm thanh `voice.mp3`:
+Sau khi lưu file `voice.txt`, tự động chạy script `scripts/generate_voice.py` để sinh file âm thanh `voice.mp3` với tốc độ nhanh, chuẩn nhịp video ngắn:
 
 ```bash
 python scripts/generate_voice.py \
   --input "output/<slug-ten-san-pham>/voice.txt" \
-  --output "output/<slug-ten-san-pham>/voice.mp3"
+  --output "output/<slug-ten-san-pham>/voice.mp3" \
+  --speed 1.25
 ```
 
 > [!NOTE]
 > - Nếu môi trường mặc định chưa nhận diện lệnh `python`, sử dụng đường dẫn Python đầy đủ:
->   `D:\hoctap\python\python.exe scripts/generate_voice.py --input "output/<slug-ten-san-pham>/voice.txt" --output "output/<slug-ten-san-pham>/voice.mp3"`
-> - Giọng đọc mặc định là nữ (`vi-VN-HoaiMyNeural`), nếu cần giọng nam có thể thêm tham số `--voice "vi-VN-NamMinhNeural"`.
-> - Tốc độ đọc mặc định là `--rate "+10%"` giúp video sôi nổi và giữ chân người xem tốt hơn.
+>   `D:\hoctap\python\python.exe scripts/generate_voice.py --input "output/<slug-ten-san-pham>/voice.txt" --output "output/<slug-ten-san-pham>/voice.mp3" --speed 1.25`
+> - Tham số `--speed 1.25` (mặc định) giúp tăng tốc độ nói 25% và tự động cắt tỉa khoảng lặng thừa giữa các câu, giúp video dứt khoát, sôi nổi và giữ chân người xem tốt hơn.
+> - Có thể điều chỉnh `--speed 1.2` (vừa phải) hoặc `--speed 1.35` (cực nhanh) tùy nhu cầu sản phẩm.
+> - Hỗ trợ cơ chế Dual-Engine (Edge TTS + Google TTS Fallback) đảm bảo luôn tạo audio thành công 100%.
 
 ---
 
