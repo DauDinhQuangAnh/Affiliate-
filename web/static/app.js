@@ -12,7 +12,6 @@ const btnGenerateText = document.getElementById("btn-generate-text");
 const btnCheckBanned = document.getElementById("btn-check-banned");
 const bannedStatus = document.getElementById("banned-status");
 const bannedAlert = document.getElementById("banned-alert");
-const btnLoadDemo = document.getElementById("btn-load-demo");
 
 const playerEmpty = document.getElementById("player-empty");
 const playerActive = document.getElementById("player-active");
@@ -30,18 +29,6 @@ const shotlistContent = document.getElementById("shotlist-content");
 const btnCloseShotlist = document.getElementById("btn-close-shotlist");
 
 let voicesMap = {};
-
-const DEMO_SCRIPT = `Ai hay bị toát mồ hôi mỗi khi ra đường, thì nhìn kỹ cái này nha.
-
-Mùa này bước ra khỏi phòng máy lạnh, là người ướt sũng cực kỳ khó chịu.
-
-Em quạt này cầm đầm tay, bề mặt nhám mịn màu xanh rất xinh.
-
-Nhìn nhỏ gọn vậy thôi, nhưng có tới năm cấp độ gió mát rượi.
-
-Mặt trước có màn hình led báo pin, dùng cổng sạc tai xi rất tiện. Pin dùng cả ngày thoải mái luôn.
-
-Mức giá chỉ hơn một trăm nghìn một chút, bấm ngay góc trái màn hình để xem nha.`;
 
 function updateWordCounter() {
   const text = textInput.value.trim();
@@ -232,12 +219,6 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-btnLoadDemo.addEventListener("click", () => {
-  slugInput.value = "demo-quat-mini";
-  textInput.value = DEMO_SCRIPT;
-  updateWordCounter();
-});
-
 voiceSelect.addEventListener("change", updateVoiceDesc);
 speedRange.addEventListener("input", (e) => setSpeed(e.target.value));
 document.querySelectorAll(".chip").forEach((chip) => {
@@ -249,5 +230,4 @@ btnCloseShotlist.addEventListener("click", () => shotlistPreview.classList.add("
 
 loadVoices();
 loadProjects();
-textInput.value = DEMO_SCRIPT;
 updateWordCounter();
