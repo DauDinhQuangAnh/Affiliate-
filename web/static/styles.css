@@ -48,8 +48,28 @@ body {
 
 .brand {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+}
+
+.brand-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-link:hover h1 {
+  color: #93c5fd;
+}
+
+.nav-back-btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
 }
 
 .brand-badge {
