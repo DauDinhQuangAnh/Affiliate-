@@ -1,7 +1,13 @@
 const btnNewProject = document.getElementById("btn-new-project");
+const apiKeyInput = document.getElementById("api-key-input");
+const aiStatusPill = document.getElementById("ai-status-pill");
+const aiStatusText = document.getElementById("ai-status-text");
+
 const scriptForm = document.getElementById("script-form");
 const productNameInput = document.getElementById("product-name-input");
 const priceInput = document.getElementById("price-input");
+const imageInput = document.getElementById("image-input");
+const imagePreview = document.getElementById("image-preview");
 const painInput = document.getElementById("pain-input");
 const hookSelect = document.getElementById("hook-select");
 const highlightsInput = document.getElementById("highlights-input");
@@ -44,13 +50,14 @@ const toastEl = document.getElementById("toast");
 
 let voicesMap = {};
 let activeSlug = "";
+let hasServerKey = false;
 let toastTimer = null;
 
 function showToast(message) {
   toastEl.textContent = message;
   toastEl.classList.remove("hidden");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.add("hidden"), 3200);
+  toastTimer = setTimeout(() => toastEl.classList.add("hidden"), 3500);
 }
 
 function toClientSlug(str) {
@@ -62,6 +69,18 @@ function toClientSlug(str) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function updateAiStatusBadge() {
+  const dot = aiStatusPill.querySelector(".dot");
+  const hasKey = hasServerKey || apiKeyInput.value.trim().length > 10;
+  if (hasKey) {
+    dot.classList.remove("warn");
+    aiStatusText.textContent = "AI Vision + Google Search Sẵn sàng";
+  } else {
+    dot.classList.add("warn");
+    aiStatusText.textContent = "Chưa có AI Key (đang dùng Template)";
+  }
 }
 
 function updateSlugPreview() {
@@ -88,11 +107,23 @@ function setSpeed(val) {
   updateWordCounter();
 }
 
+async function loadConfig() {
+  const savedKey = localStorage.getItem("affiliate_gemini_key") || "";
+  if (savedKey) apiKeyInput.value = savedKey;
+  try {
+    const res = await fetch("/api/config");
+    const data = await res.json();
+    hasServerKey = Boolean(data.has_env_key);
+  } catch {
+    hasServerKey = false;
+  }
+  updateAiStatusBadge();
+}
+
 async function loadHooks() {
   try {
     const res = await fetch("/api/hooks");
     const data = await res.json();
-    hookSelect.innerHTML = "";
     data.hooks.forEach((h) => {
       const opt = document.createElement("option");
       opt.value = h.id;
@@ -221,9 +252,7 @@ async function loadProjects() {
       btnDel.onclick = async () => {
         const delRes = await fetch(`/api/projects/${encodeURIComponent(p.slug)}`, { method: "DELETE" });
         if (delRes.ok) {
-          if (activeSlug === p.slug) {
-            resetWorkspace();
-          }
+          if (activeSlug === p.slug) resetWorkspace();
           await loadProjects();
           showToast(`Đã xóa "${p.slug}".`);
         }
@@ -245,6 +274,9 @@ function resetWorkspace() {
   priceInput.value = "";
   painInput.value = "";
   highlightsInput.value = "";
+  imageInput.value = "";
+  imagePreview.classList.add("hidden");
+  imagePreview.removeAttribute("src");
   textInput.value = "";
   bannedAlert.classList.add("hidden");
   bannedStatus.textContent = "";
@@ -256,6 +288,21 @@ function resetWorkspace() {
   updateSlugPreview();
   updateWordCounter();
 }
+
+apiKeyInput.addEventListener("input", () => {
+  localStorage.setItem("affiliate_gemini_key", apiKeyInput.value.trim());
+  updateAiStatusBadge();
+});
+
+imageInput.addEventListener("change", () => {
+  const file = imageInput.files[0];
+  if (file) {
+    imagePreview.src = URL.createObjectURL(file);
+    imagePreview.classList.remove("hidden");
+  } else {
+    imagePreview.classList.add("hidden");
+  }
+});
 
 btnNewProject.addEventListener("click", () => {
   resetWorkspace();
@@ -269,24 +316,26 @@ scriptForm.addEventListener("submit", async (e) => {
   if (!productName) return;
 
   btnBuildScript.disabled = true;
-  btnBuildScript.textContent = "⏳ Đang tạo kịch bản...";
+  const usingAi = hasServerKey || apiKeyInput.value.trim().length > 10;
+  btnBuildScript.textContent = usingAi
+    ? "⏳ AI đang phân tích ảnh, search & viết kịch bản..."
+    : "⏳ Đang tạo kịch bản từ Template...";
 
-  const highlights = highlightsInput.value
-    .split(/[,\n]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const formData = new FormData();
+  formData.append("product_name", productName);
+  formData.append("price_text", priceInput.value.trim());
+  formData.append("pain_point", painInput.value.trim());
+  formData.append("highlights", highlightsInput.value.trim());
+  formData.append("hook_id", hookSelect.value || "auto");
+  formData.append("api_key", apiKeyInput.value.trim());
+  if (imageInput.files[0]) {
+    formData.append("image", imageInput.files[0]);
+  }
 
   try {
     const res = await fetch("/api/build-script", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        product_name: productName,
-        pain_point: painInput.value.trim(),
-        highlights,
-        price_text: priceInput.value.trim(),
-        hook_id: hookSelect.value || "pain-1",
-      }),
+      body: formData,
     });
     const data = await res.json();
     if (!res.ok) {
@@ -300,15 +349,17 @@ scriptForm.addEventListener("submit", async (e) => {
     shotlistContent.textContent = data.shotlist_md;
     shotlistPanel.classList.remove("hidden");
     bannedAlert.classList.add("hidden");
-    bannedStatus.textContent = "✅ Đã lọc từ cấm & chuẩn hóa TTS.";
+    bannedStatus.textContent = data.mode === "ai-gemini"
+      ? "✅ AI đã Research, viết kịch bản, lọc từ cấm & chuẩn hóa TTS."
+      : "ℹ️ Đã tạo theo Template (nhập Gemini API Key để AI tự viết tự nhiên hơn).";
     updateWordCounter();
     await loadProjects();
-    showToast(`Đã tạo kịch bản cho "${data.slug}" (${data.word_count} từ).`);
+    showToast(`Đã tạo xong kịch bản (${data.word_count} từ).`);
   } catch (err) {
     showToast("Lỗi kết nối khi tạo kịch bản.");
   } finally {
     btnBuildScript.disabled = false;
-    btnBuildScript.textContent = "✨ Tự tạo Kịch bản & Shotlist";
+    btnBuildScript.textContent = "✨ AI Tạo Kịch bản & Shotlist";
   }
 });
 
@@ -335,7 +386,7 @@ btnCheckBanned.addEventListener("click", async () => {
         .join("<br>");
       bannedAlert.classList.remove("hidden");
     }
-  } catch (err) {
+  } catch {
     bannedStatus.textContent = "Lỗi kiểm tra từ cấm.";
   }
 });
@@ -357,7 +408,7 @@ btnFixBanned.addEventListener("click", async () => {
       ? `✅ Đã tự thay ${data.fixed_count} từ cấm.`
       : "✅ Không có từ cấm nào cần thay.";
     showToast(`Đã xử lý xong (${data.fixed_count} từ được thay thế).`);
-  } catch (err) {
+  } catch {
     showToast("Lỗi khi sửa từ cấm.");
   }
 });
@@ -375,7 +426,7 @@ btnNormalizeTts.addEventListener("click", async () => {
     textInput.value = data.text;
     updateWordCounter();
     showToast("Đã chuẩn hóa văn bản cho TTS.");
-  } catch (err) {
+  } catch {
     showToast("Lỗi chuẩn hóa TTS.");
   }
 });
@@ -413,7 +464,7 @@ ttsForm.addEventListener("submit", async (e) => {
     showAudioResult(data);
     await loadProjects();
     showToast(`Đã tạo xong voice.mp3 (${data.duration_sec}s)!`);
-  } catch (err) {
+  } catch {
     showToast("Lỗi kết nối tới server Python.");
   } finally {
     btnGenerate.disabled = false;
@@ -439,6 +490,7 @@ document.querySelectorAll(".chip").forEach((chip) => {
 textInput.addEventListener("input", updateWordCounter);
 btnRefresh.addEventListener("click", loadProjects);
 
+loadConfig();
 loadHooks();
 loadVoices();
 loadProjects();

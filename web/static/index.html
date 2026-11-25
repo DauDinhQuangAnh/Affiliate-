@@ -11,12 +11,12 @@
     <div class="topbar-inner">
       <div class="brand">
         <span class="brand-badge">AFFILIATE STUDIO</span>
-        <h1>Kịch Bản &amp; Giọng Đọc Video</h1>
+        <h1>AI Kịch Bản &amp; Giọng Đọc Video</h1>
       </div>
       <div class="header-actions">
-        <div class="status-pill">
-          <span class="dot"></span>
-          <span>12 Giọng Tiếng Việt • Audio Mastering</span>
+        <div id="ai-status-pill" class="status-pill">
+          <span class="dot warn"></span>
+          <span id="ai-status-text">Chưa cấu hình AI Key (Template)</span>
         </div>
         <button type="button" id="btn-new-project" class="btn-secondary">+ Sản phẩm mới</button>
       </div>
@@ -24,16 +24,28 @@
   </header>
 
   <main class="workspace">
-    <!-- Cột trái: Quy trình Tạo kịch bản -> Kiểm duyệt -> Tạo Voice -->
+    <!-- Cột trái: Quy trình AI 5 bước -->
     <section class="left-column">
-      <!-- Bước 1: Thông tin sản phẩm & Sinh kịch bản -->
+      <!-- Bước 1: Ảnh + Tên sản phẩm + AI Config -->
       <div class="panel">
         <div class="panel-header">
-          <h2>1. Thông tin Sản phẩm &amp; Sinh Kịch bản</h2>
+          <h2>1. Sản phẩm &amp; AI Research (Bước 1–4)</h2>
           <span id="slug-preview" class="meta-badge">slug: chưa nhập</span>
         </div>
 
         <form id="script-form" class="form-stack">
+          <div class="ai-key-bar">
+            <div class="field" style="flex:1">
+              <label for="api-key-input">Gemini API Key (để AI tự nhìn ảnh + Google Search + viết kịch bản chuẩn)</label>
+              <input
+                type="password"
+                id="api-key-input"
+                placeholder="Dán Gemini API Key (AIza...) — lưu cục bộ trên trình duyệt"
+                autocomplete="off"
+              >
+            </div>
+          </div>
+
           <div class="grid-2">
             <div class="field">
               <label for="product-name-input">Tên sản phẩm *</label>
@@ -56,41 +68,46 @@
 
           <div class="grid-2">
             <div class="field">
-              <label for="pain-input">Nỗi đau khách hàng (tùy chọn)</label>
+              <label for="image-input">Ảnh sản phẩm (AI lấy 3 chi tiết trực quan)</label>
+              <input type="file" id="image-input" accept="image/*">
+              <img id="image-preview" class="image-preview hidden" alt="Xem trước ảnh sản phẩm">
+            </div>
+            <div class="field">
+              <label for="hook-select">Công thức Hook mở đầu</label>
+              <select id="hook-select">
+                <option value="auto" selected>✨ AI tự chọn Hook phù hợp nhất (12 mẫu)</option>
+              </select>
+              <label for="pain-input" style="margin-top:6px">Ghi chú / Nỗi đau khách hàng (tùy chọn)</label>
               <input
                 type="text"
                 id="pain-input"
                 placeholder="VD: hay làm rơi máy trầy viền, bám mồ hôi tay"
               >
             </div>
-            <div class="field">
-              <label for="hook-select">Công thức Hook mở đầu</label>
-              <select id="hook-select"></select>
-            </div>
           </div>
 
           <div class="field">
-            <label for="highlights-input">3 điểm nổi bật / chi tiết nhìn thấy (cách nhau bởi dấu phẩy hoặc xuống dòng)</label>
+            <label for="highlights-input">Điểm nổi bật bổ sung (nếu có)</label>
             <textarea
               id="highlights-input"
               rows="2"
-              placeholder="VD: viền nhám mờ chống bám vân tay, vòng nam châm hít sạc không dây, gờ nhô cao bảo vệ cụm camera"
+              placeholder="VD: viền nhám mờ chống bám vân tay, vòng nam châm MagSafe, gờ nhô cao bảo vệ camera"
             ></textarea>
           </div>
 
-          <div class="toolbar-row">
+          <div class="toolbar-row wrap">
             <button type="submit" id="btn-build-script" class="btn-secondary-accent">
-              ✨ Tự tạo Kịch bản &amp; Shotlist
+              ✨ AI Tạo Kịch bản &amp; Shotlist
             </button>
-            <span class="hint-text">Tạo tự động 4 phân đoạn chuẩn 30–45s + lọc từ cấm + chuẩn hóa TTS.</span>
+            <span id="build-mode-hint" class="hint-text">Chạy đúng flow: Research ảnh &amp; Web → Viết kịch bản → Lọc từ cấm → Chuẩn hóa TTS.</span>
           </div>
         </form>
       </div>
 
-      <!-- Bước 2 & 3: Chỉnh sửa lời thoại & Tạo MP3 -->
+      <!-- Bước 2 & 3: Lời thoại AI tạo ra -> Chỉnh sửa -> Tạo Voice MP3 -->
       <div class="panel">
         <div class="panel-header">
-          <h2>2. Lời thoại (<code>voice.txt</code>) &amp; Tạo Giọng đọc</h2>
+          <h2>2. Lời thoại chuẩn hóa (<code>voice.txt</code>) &amp; Xuất Voice</h2>
           <span id="word-counter" class="meta-badge">0 từ (~0s)</span>
         </div>
 
@@ -100,7 +117,7 @@
               id="text-input"
               name="text"
               rows="8"
-              placeholder="Nhấn 'Tự tạo Kịch bản & Shotlist' ở trên hoặc tự nhập lời thoại của bạn tại đây..."
+              placeholder="Lời thoại AI tạo ra sẽ tự động điền vào đây (bạn có thể chỉnh sửa lại trước khi xuất MP3)..."
               required
             ></textarea>
             <div class="toolbar-row wrap">

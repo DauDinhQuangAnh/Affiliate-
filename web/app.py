@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Web Studio Server (FastAPI) cho Affiliate Video Script & Voice Generator.
-Hỗ trợ quy trình đầy đủ: Nhập sản phẩm -> Tự sinh kịch bản & Shotlist ->
-Quét & tự sửa từ cấm -> Chuẩn hóa TTS -> Tạo & Nghe thử MP3 -> Quản lý output/.
+Web Studio Server (FastAPI) cho Affiliate Video Script & Voice Generator (v2.2).
+Hỗ trợ đầy đủ 5 bước theo SKILL.md:
+- Upload ảnh sản phẩm + Tên + Giá -> AI (Gemini Vision + Google Search) tự phân tích & viết kịch bản.
+- Fallback Smart Script Builder nếu chưa cấu hình Gemini API Key.
+- Quét & Tự sửa từ cấm + Chuẩn hóa TTS + Tạo & Nghe thử MP3 + Quản lý output/.
 """
 
 import os
@@ -11,9 +13,9 @@ import shutil
 import sys
 import time
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -25,20 +27,13 @@ STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 sys.path.insert(0, str(SCRIPTS_DIR))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import ai_generator  # noqa: E402
 import generate_voice as tts_core  # noqa: E402
 import script_engine  # noqa: E402
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="Affiliate Voice & Script Studio", version="2.1.0")
-
-
-class BuildScriptRequest(BaseModel):
-    product_name: str = Field(..., min_length=1, max_length=150)
-    pain_point: str = Field(default="", max_length=300)
-    highlights: List[str] = Field(default_factory=list)
-    price_text: str = Field(default="", max_length=100)
-    hook_id: str = Field(default="pain-1")
+app = FastAPI(title="Affiliate Voice & Script Studio", version="2.2.0")
 
 
 class TextRequest(BaseModel):
@@ -57,15 +52,20 @@ async def serve_index():
     return FileResponse(STATIC_DIR / "index.html")
 
 
+@app.get("/api/config")
+async def get_config():
+    """Kiểm tra xem server đã có sẵn biến môi trường GEMINI_API_KEY chưa."""
+    has_env_key = bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"))
+    return {"has_env_key": has_env_key}
+
+
 @app.get("/api/hooks")
 async def get_hooks():
-    """Trả về 12 công thức Hook chia theo 5 nhóm."""
     return {"hooks": script_engine.HOOK_TEMPLATES}
 
 
 @app.get("/api/voices")
 async def get_voices():
-    """Trả về danh sách 12 profile giọng đọc tiếng Việt."""
     voices = []
     for key, profile in tts_core.VOICE_PROFILES.items():
         voices.append({
@@ -79,19 +79,68 @@ async def get_voices():
 
 
 @app.post("/api/build-script")
-async def api_build_script(req: BuildScriptRequest):
-    """Tạo kịch bản Affiliate chuẩn 5 bước và lưu shotlist.md + voice.txt."""
-    slug = script_engine.slugify(req.product_name)
-    result = script_engine.build_affiliate_script(
-        product_name=req.product_name,
-        pain_point=req.pain_point,
-        highlights=req.highlights,
-        price_text=req.price_text,
-        hook_id=req.hook_id,
-    )
+async def api_build_script(
+    product_name: str = Form(...),
+    price_text: str = Form(""),
+    pain_point: str = Form(""),
+    highlights: str = Form(""),
+    hook_id: str = Form("auto"),
+    api_key: str = Form(""),
+    image: Optional[UploadFile] = File(None),
+):
+    """
+    Sinh kịch bản theo đúng flow SKILL.md:
+    - Nếu có Gemini API Key (từ form hoặc env): dùng AI Vision + Google Search.
+    - Nếu chưa có Key: fallback sang Smart Template Builder nội bộ và báo rõ chế độ.
+    """
+    clean_name = product_name.strip()
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Vui lòng nhập tên sản phẩm.")
 
+    slug = script_engine.slugify(clean_name)
     project_dir = OUTPUT_DIR / slug
     project_dir.mkdir(parents=True, exist_ok=True)
+
+    image_bytes = None
+    image_mime = "image/jpeg"
+    if image and image.filename:
+        image_bytes = await image.read()
+        if image_bytes:
+            image_mime = image.content_type or "image/jpeg"
+            ext = Path(image.filename).suffix or ".jpg"
+            (project_dir / f"product{ext}").write_bytes(image_bytes)
+
+    effective_key = api_key.strip() or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
+
+    if effective_key:
+        notes_combined = "\n".join(filter(None, [
+            f"Nỗi đau khách hàng: {pain_point.strip()}" if pain_point.strip() else "",
+            f"Điểm nổi bật: {highlights.strip()}" if highlights.strip() else "",
+        ]))
+        try:
+            result = ai_generator.generate_script_with_ai(
+                api_key=effective_key,
+                product_name=clean_name,
+                price_text=price_text.strip(),
+                notes=notes_combined,
+                hook_id=hook_id,
+                image_bytes=image_bytes,
+                image_mime=image_mime,
+            )
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Lỗi gọi Gemini AI: {e}")
+    else:
+        highlight_list = [h.strip() for h in highlights.replace("\n", ",").split(",") if h.strip()]
+        chosen_hook = "pain-1" if hook_id == "auto" else hook_id
+        result = script_engine.build_affiliate_script(
+            product_name=clean_name,
+            pain_point=pain_point.strip(),
+            highlights=highlight_list,
+            price_text=price_text.strip(),
+            hook_id=chosen_hook,
+        )
+        result["mode"] = "template-fallback"
+
     (project_dir / "shotlist.md").write_text(result["shotlist_md"], encoding="utf-8")
     (project_dir / "voice.txt").write_text(result["voice_txt"], encoding="utf-8")
 
@@ -100,33 +149,30 @@ async def api_build_script(req: BuildScriptRequest):
         "shotlist_md": result["shotlist_md"],
         "voice_txt": result["voice_txt"],
         "word_count": result["word_count"],
+        "mode": result["mode"],
     }
 
 
 @app.post("/api/check-banned")
 async def check_banned(req: TextRequest):
-    """Kiểm tra từ cấm TikTok Shop / Shopee Video."""
     matches = script_engine.scan_banned_words(req.text)
     return {"count": len(matches), "matches": matches}
 
 
 @app.post("/api/fix-banned")
 async def fix_banned(req: TextRequest):
-    """Tự động thay thế từ cấm bằng từ an toàn."""
     fixed_text, applied = script_engine.auto_fix_banned_words(req.text)
     return {"text": fixed_text, "fixed_count": len(applied), "applied": applied}
 
 
 @app.post("/api/normalize-tts")
 async def normalize_tts(req: TextRequest):
-    """Chuẩn hóa văn bản cho engine TTS (số, đơn vị, phiên âm mềm)."""
     normalized = script_engine.normalize_for_tts(req.text)
     return {"text": normalized}
 
 
 @app.post("/api/generate")
 async def api_generate(req: GenerateRequest):
-    """Lưu voice.txt và sinh file voice.mp3 bằng Dual-Engine + Audio Mastering."""
     safe_slug = script_engine.slugify(req.slug)
     project_dir = OUTPUT_DIR / safe_slug
     project_dir.mkdir(parents=True, exist_ok=True)
@@ -183,7 +229,6 @@ async def api_generate(req: GenerateRequest):
 
 @app.get("/api/projects")
 async def list_projects():
-    """Liệt kê các sản phẩm đã tạo trong thư mục output/."""
     projects = []
     if OUTPUT_DIR.exists():
         dirs = sorted(
@@ -213,7 +258,6 @@ async def list_projects():
 
 @app.delete("/api/projects/{slug}")
 async def delete_project(slug: str):
-    """Xóa thư mục sản phẩm trong output/."""
     safe_slug = script_engine.slugify(slug)
     target = (OUTPUT_DIR / safe_slug).resolve()
     if not str(target).startswith(str(OUTPUT_DIR.resolve())) or not target.exists():
