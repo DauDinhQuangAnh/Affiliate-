@@ -21,7 +21,26 @@ import numpy as np
 # BẢNG ĐẶC TẢ 12 PROFILE GIỌNG ĐỌC TIẾNG VIỆT CHO VIDEO AFFILIATE
 # ==============================================================================
 VOICE_PROFILES = {
-    # --- NHÓM PHONG CÁCH TIKTOK REVIEW (NỔI BẬT, BẮT TAI) ---
+    # --- NHÓM GIỌNG ADAM & TIKTOK TRENDING (DỄ LÊN XU HƯỚNG) ---
+    "adam-elevenlabs": {
+        "engine": "elevenlabs",
+        "voice_id": "pNInz6obpgDQGcFmaJgB",  # Adam chính chủ ElevenLabs
+        "gender": "male",
+        "desc": "🔥 Adam (ElevenLabs Chính chủ): Nam trầm dày uy lực, giữ chân người xem cực tốt (cần ElevenLabs Key)",
+        "pitch_shift": 0.0,
+        "default_speed": 1.15,
+        "eq_boost": 0.15,
+    },
+    "tiktok-adam-pro": {
+        "engine": "edge",
+        "voice_id": "vi-VN-NamMinhNeural",
+        "gender": "male",
+        "desc": "🎙️ Adam Style (Miễn phí): Nam trầm dày, ấm áp, nhấn bass + clarity kiểu storyteller TikTok",
+        "pitch_shift": -3.2,
+        "default_speed": 1.22,
+        "eq_boost": 0.28,
+        "warm_boost": 0.25,
+    },
     "tiktok-co-gai": {
         "engine": "edge",
         "voice_id": "vi-VN-HoaiMyNeural",
@@ -146,6 +165,8 @@ VOICE_ALIASES = {
     "cogai": "tiktok-co-gai",
     "thanhnien": "tiktok-thanh-nien",
     "genz": "tiktok-genz",
+    "adam": "adam-elevenlabs",
+    "adam-free": "tiktok-adam-pro",
 }
 
 
@@ -186,6 +207,7 @@ def post_process_audio(
     speed_factor: float = 1.25,
     pitch_shift_semitones: float = 0.0,
     eq_boost: float = 0.25,
+    warm_boost: float = 0.0,
     max_pause_sec: float = 0.16,
 ):
     """
@@ -256,9 +278,13 @@ def post_process_audio(
 
             _, cur_data = signal.istft(stretched, fs=sr, nperseg=n_fft, noverlap=n_fft - hop_length)
 
-        # 4. Vocal Clarity EQ (High-pass 85Hz + Presence Boost 2.2kHz-5kHz)
+        # 4. Vocal Clarity EQ (High-pass 85Hz + Warm Low-Mid nếu cần + Presence Boost 2.2kHz-5kHz)
         sos_hp = signal.butter(2, 85, btype="highpass", fs=sr, output="sos")
         cur_data = signal.sosfilt(sos_hp, cur_data)
+
+        if warm_boost > 0:
+            sos_warm = signal.butter(2, [140, 320], btype="bandpass", fs=sr, output="sos")
+            cur_data = cur_data + warm_boost * signal.sosfilt(sos_warm, cur_data)
 
         if eq_boost > 0:
             sos_bp = signal.butter(2, [2200, 5000], btype="bandpass", fs=sr, output="sos")
@@ -282,6 +308,51 @@ def post_process_audio(
 # ==============================================================================
 # CÁC ENGINE TẠO GIỌNG ĐỌC (AN TOÀN TUYỆT ĐỐI VỚI SYMANTEC)
 # ==============================================================================
+def synthesize_with_elevenlabs(text: str, output_path: str, voice_id: str, api_key: str = "") -> bool:
+    """Sinh giọng đọc qua ElevenLabs REST API (mặc định giọng Adam - eleven_multilingual_v2)."""
+    key = (api_key or os.environ.get("ELEVENLABS_API_KEY") or "").strip()
+    if not key:
+        print("[TTS:ElevenLabs] Chưa có ELEVENLABS_API_KEY, chuyển sang giọng Adam Style miễn phí...")
+        return False
+    try:
+        import urllib.request
+        import json
+
+        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
+        payload = json.dumps({
+            "text": text,
+            "model_id": "eleven_multilingual_v2",
+            "voice_settings": {
+                "stability": 0.45,
+                "similarity_boost": 0.80,
+                "style": 0.35,
+                "use_speaker_boost": True,
+            },
+        }).encode("utf-8")
+
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            headers={
+                "xi-api-key": key,
+                "Content-Type": "application/json",
+                "Accept": "audio/mpeg",
+            },
+            method="POST",
+        )
+        print(f"[TTS:ElevenLabs] Đang tạo giọng Adam chính chủ qua ElevenLabs...")
+        with urllib.request.urlopen(req, timeout=25) as resp:
+            audio_bytes = resp.read()
+        with open(output_path, "wb") as f:
+            f.write(audio_bytes)
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
+            print(f"[TTS:ElevenLabs] Thành công! ({os.path.getsize(output_path)} bytes)")
+            return True
+    except Exception as e:
+        print(f"[TTS:ElevenLabs] Lỗi gọi ElevenLabs API: {e}", file=sys.stderr)
+    return False
+
+
 def synthesize_with_gtts(text: str, output_path: str, lang: str = "vi") -> bool:
     """Sinh giọng đọc bằng Google TTS (HTTPS chuẩn, không bị Symantec chặn)."""
     try:
@@ -322,7 +393,8 @@ async def generate_voice(
     output_path: str,
     voice_request: str = "random",
     speed: float = None,
-    engine_override: str = "auto"
+    engine_override: str = "auto",
+    elevenlabs_key: str = "",
 ):
     if not os.path.exists(text_path):
         print(f"[ERROR] Không tìm thấy file đầu vào: {text_path}", file=sys.stderr)
@@ -340,10 +412,16 @@ async def generate_voice(
         os.makedirs(out_dir, exist_ok=True)
 
     voice_key, profile = pick_voice(voice_request)
+    # Nếu random trúng adam-elevenlabs mà chưa có key, tự chuyển sang tiktok-adam-pro miễn phí
+    has_el_key = bool((elevenlabs_key or os.environ.get("ELEVENLABS_API_KEY") or "").strip())
+    if voice_request.strip().lower() in ("random", "nam", "male") and voice_key == "adam-elevenlabs" and not has_el_key:
+        voice_key = "tiktok-adam-pro"
+        profile = VOICE_PROFILES[voice_key]
+
     target_speed = speed if speed is not None else profile.get("default_speed", 1.25)
 
     print("=" * 72)
-    print(f"🎬 BẮT ĐẦU TẠO GIỌNG ĐỌC CHO VIDEO AFFILIATE (v2.0 Pro)")
+    print(f"🎬 BẮT ĐẦU TẠO GIỌNG ĐỌC CHO VIDEO AFFILIATE (v2.3)")
     print(f"  - File văn bản    : {text_path}")
     print(f"  - File âm thanh   : {output_path}")
     print(f"  - Giọng đọc chọn  : [{voice_key}] - {profile['desc']}")
@@ -353,9 +431,15 @@ async def generate_voice(
     success = False
     used_engine = profile["engine"] if engine_override == "auto" else engine_override
 
-    if used_engine == "edge" or engine_override == "edge":
+    if used_engine == "elevenlabs":
+        success = synthesize_with_elevenlabs(text, output_path, voice_id=profile["voice_id"], api_key=elevenlabs_key)
+        if not success:
+            print("[INFO] Tự động chuyển sang giọng Adam Style (Edge/gTTS + Warm Mastering) miễn phí...")
+            profile = VOICE_PROFILES["tiktok-adam-pro"]
+            used_engine = profile["engine"]
+
+    if not success and (used_engine == "edge" or engine_override == "edge"):
         voice_id = profile["voice_id"] if profile["engine"] == "edge" else "vi-VN-NamMinhNeural"
-        # Truyền rate mặc định +0% để hậu kỳ Phase Vocoder xử lý đồng nhất tốc độ & pitch
         success = await synthesize_with_edge(text, output_path, voice_id=voice_id, rate="+0%")
 
     if not success:
@@ -364,19 +448,27 @@ async def generate_voice(
         success = synthesize_with_gtts(text, output_path, lang="vi")
 
     if success:
-        # Áp dụng Mastering + Pitch/Speed đồng nhất cho mọi engine
-        effective_pitch = profile.get("pitch_shift", 0.0)
-        # Nếu Edge TTS thành công trên đúng giọng gốc thì chỉ tinh chỉnh nhẹ hoặc giữ pitch gốc
-        if used_engine == "edge" and os.path.exists(output_path) and profile["engine"] == "edge":
-            # Khi chạy được đúng giọng neural gốc, giảm nhẹ độ lệch pitch
-            effective_pitch = effective_pitch * 0.5
+        if used_engine == "elevenlabs":
+            # Giữ nguyên chất giọng gốc của ElevenLabs Adam, chỉ chuẩn hóa tốc độ nhẹ nếu cần
+            post_process_audio(
+                output_path,
+                speed_factor=target_speed,
+                pitch_shift_semitones=0.0,
+                eq_boost=profile.get("eq_boost", 0.15),
+                warm_boost=0.0,
+            )
+        else:
+            effective_pitch = profile.get("pitch_shift", 0.0)
+            if used_engine == "edge" and os.path.exists(output_path) and profile["engine"] == "edge":
+                effective_pitch = effective_pitch * 0.5
 
-        post_process_audio(
-            output_path,
-            speed_factor=target_speed,
-            pitch_shift_semitones=effective_pitch,
-            eq_boost=profile.get("eq_boost", 0.25),
-        )
+            post_process_audio(
+                output_path,
+                speed_factor=target_speed,
+                pitch_shift_semitones=effective_pitch,
+                eq_boost=profile.get("eq_boost", 0.25),
+                warm_boost=profile.get("warm_boost", 0.0),
+            )
 
     if success and os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
         file_size_kb = os.path.getsize(output_path) / 1024

@@ -45,6 +45,7 @@ class GenerateRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=5000)
     voice: str = Field(default="random")
     speed: Optional[float] = Field(default=None, ge=0.8, le=1.6)
+    elevenlabs_key: str = Field(default="")
 
 
 @app.get("/")
@@ -196,6 +197,7 @@ async def api_generate(req: GenerateRequest):
             voice_request=chosen_key,
             speed=target_speed,
             engine_override="auto",
+            elevenlabs_key=req.elevenlabs_key.strip(),
         )
     except SystemExit as e:
         raise HTTPException(status_code=500, detail=f"Lỗi khi tạo giọng đọc (mã {e.code}).")

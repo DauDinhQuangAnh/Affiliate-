@@ -34,13 +34,22 @@
         </div>
 
         <form id="script-form" class="form-stack">
-          <div class="ai-key-bar">
-            <div class="field" style="flex:1">
-              <label for="api-key-input">Gemini API Key (để AI tự nhìn ảnh + Google Search + viết kịch bản chuẩn)</label>
+          <div class="ai-key-bar grid-2">
+            <div class="field">
+              <label for="api-key-input">Gemini API Key (AI đọc ảnh + Google Search viết kịch bản)</label>
               <input
                 type="password"
                 id="api-key-input"
-                placeholder="Dán Gemini API Key (AIza...) — lưu cục bộ trên trình duyệt"
+                placeholder="Dán Gemini API Key (AIza...) — lưu trên trình duyệt"
+                autocomplete="off"
+              >
+            </div>
+            <div class="field">
+              <label for="elevenlabs-key-input">ElevenLabs API Key (tùy chọn — cho giọng Adam chính chủ)</label>
+              <input
+                type="password"
+                id="elevenlabs-key-input"
+                placeholder="Dán ElevenLabs Key (sk_...) — bỏ trống sẽ dùng bản miễn phí"
                 autocomplete="off"
               >
             </div>

@@ -1,5 +1,6 @@
 const btnNewProject = document.getElementById("btn-new-project");
 const apiKeyInput = document.getElementById("api-key-input");
+const elevenlabsKeyInput = document.getElementById("elevenlabs-key-input");
 const aiStatusPill = document.getElementById("ai-status-pill");
 const aiStatusText = document.getElementById("ai-status-text");
 
@@ -110,6 +111,8 @@ function setSpeed(val) {
 async function loadConfig() {
   const savedKey = localStorage.getItem("affiliate_gemini_key") || "";
   if (savedKey) apiKeyInput.value = savedKey;
+  const savedElKey = localStorage.getItem("affiliate_elevenlabs_key") || "";
+  if (savedElKey) elevenlabsKeyInput.value = savedElKey;
   try {
     const res = await fetch("/api/config");
     const data = await res.json();
@@ -294,6 +297,10 @@ apiKeyInput.addEventListener("input", () => {
   updateAiStatusBadge();
 });
 
+elevenlabsKeyInput.addEventListener("input", () => {
+  localStorage.setItem("affiliate_elevenlabs_key", elevenlabsKeyInput.value.trim());
+});
+
 imageInput.addEventListener("change", () => {
   const file = imageInput.files[0];
   if (file) {
@@ -452,6 +459,7 @@ ttsForm.addEventListener("submit", async (e) => {
         text: textInput.value,
         voice: voiceSelect.value,
         speed: parseFloat(speedRange.value),
+        elevenlabs_key: elevenlabsKeyInput.value.trim(),
       }),
     });
 
