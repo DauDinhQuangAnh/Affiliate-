@@ -34,7 +34,7 @@ Khởi động Web UI để nhập kịch bản, quét từ cấm, chọn 1 tron
 ```bash
 python web/app.py
 ```
-Sau đó mở trình duyệt tại: **http://127.0.0.1:8000**
+Sau đó mở trình duyệt tại: **http://127.0.0.1:8088**
 
 ---
 

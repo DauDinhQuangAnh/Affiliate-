@@ -187,5 +187,6 @@ app.mount("/output", StaticFiles(directory=str(OUTPUT_DIR)), name="output")
 
 if __name__ == "__main__":
     import uvicorn
-    print("🚀 Đang khởi động Affiliate Voice & Script Studio tại: http://127.0.0.1:8000")
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    port = int(os.environ.get("PORT", 8088))
+    print(f"🚀 Đang khởi động Affiliate Voice & Script Studio tại: http://127.0.0.1:{port}")
+    uvicorn.run(app, host="127.0.0.1", port=port)
