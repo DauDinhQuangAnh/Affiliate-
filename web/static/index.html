@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Affiliate Voice &amp; Script Studio</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-badge">AFFILIATE STUDIO</span>
+        <h1>Tạo Giọng Đọc &amp; Kịch Bản Video</h1>
+      </div>
+      <div class="status-pill">
+        <span class="dot"></span>
+        <span>12 Giọng Tiếng Việt • Audio Mastering v2.0</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <!-- Cột trái: Soạn thảo & Cấu hình TTS -->
+    <section class="panel editor-panel">
+      <div class="panel-header">
+        <h2>1. Kịch bản &amp; Cấu hình Giọng đọc</h2>
+        <button type="button" id="btn-load-demo" class="btn-ghost">Dán mẫu demo</button>
+      </div>
+
+      <form id="tts-form" class="form-stack">
+        <div class="field">
+          <label for="slug-input">Tên sản phẩm / Thư mục lưu (Slug)</label>
+          <input
+            type="text"
+            id="slug-input"
+            name="slug"
+            placeholder="Ví dụ: Quạt mini cầm tay (tự chuyển thành quat-mini-cam-tay)"
+            value="demo-quat-mini"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label for="text-input">Lời thoại chuẩn hóa (<code>voice.txt</code>)</label>
+            <span id="word-counter" class="meta-badge">0 từ (~0s)</span>
+          </div>
+          <textarea
+            id="text-input"
+            name="text"
+            rows="9"
+            placeholder="Nhập lời thoại thuần văn bản (câu ngắn dưới 18 chữ, dùng dấu phẩy để ngắt hơi, mỗi đoạn cách 1 dòng trống)..."
+            required
+          ></textarea>
+          <div class="toolbar-row">
+            <button type="button" id="btn-check-banned" class="btn-secondary">Quét từ cấm TikTok/Shopee</button>
+            <span id="banned-status" class="hint-text"></span>
+          </div>
+          <div id="banned-alert" class="alert-box hidden" role="alert"></div>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="voice-select">Chọn Giọng Đọc</label>
+            <select id="voice-select" name="voice">
+              <optgroup label="Chế độ Thông minh (Khuyên dùng)">
+                <option value="random" selected>🎲 Random tất cả (12 giọng)</option>
+                <option value="tiktok">🔥 Random phong cách TikTok (5 giọng)</option>
+                <option value="nu">👩 Random giọng Nữ</option>
+                <option value="nam">👨 Random giọng Nam</option>
+              </optgroup>
+              <optgroup id="specific-voices-group" label="Chọn đích danh giọng cụ thể">
+              </optgroup>
+            </select>
+            <p id="voice-desc" class="hint-text">Tự động chọn ngẫu nhiên 1 trong 12 giọng để tránh trùng lặp âm thanh giữa các video.</p>
+          </div>
+
+          <div class="field">
+            <div class="label-row">
+              <label for="speed-range">Tốc độ đọc</label>
+              <span id="speed-value" class="meta-badge">1.25x</span>
+            </div>
+            <input
+              type="range"
+              id="speed-range"
+              name="speed"
+              min="0.90"
+              max="1.50"
+              step="0.02"
+              value="1.25"
+            >
+            <div class="speed-presets">
+              <button type="button" class="chip" data-speed="1.15">1.15x Vừa</button>
+              <button type="button" class="chip active" data-speed="1.25">1.25x Chuẩn</button>
+              <button type="button" class="chip" data-speed="1.32">1.32x Nhanh</button>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="btn-generate" class="btn-primary">
+          <span id="btn-generate-text">🎙️ Tạo Giọng Đọc MP3</span>
+        </button>
+      </form>
+    </section>
+
+    <!-- Cột phải: Kết quả phát Audio & Thư viện sản phẩm -->
+    <section class="side-column">
+      <div class="panel player-panel">
+        <div class="panel-header">
+          <h2>2. Kết quả &amp; Nghe thử</h2>
+          <a id="download-link" class="btn-ghost hidden" download="voice.mp3">⬇️ Tải MP3</a>
+        </div>
+
+        <div id="player-empty" class="empty-state">
+          Bấm <strong>Tạo Giọng Đọc MP3</strong> hoặc chọn một sản phẩm bên dưới để nghe thử trực tiếp.
+        </div>
+
+        <div id="player-active" class="player-box hidden">
+          <div class="result-meta">
+            <div>
+              <strong id="res-slug">-</strong>
+              <p id="res-voice-desc" class="hint-text">-</p>
+            </div>
+            <div class="badges-col">
+              <span id="res-duration" class="meta-badge">0s</span>
+              <span id="res-size" class="meta-badge">0 KB</span>
+            </div>
+          </div>
+          <audio id="audio-player" controls preload="metadata"></audio>
+        </div>
+      </div>
+
+      <div class="panel history-panel">
+        <div class="panel-header">
+          <h2>3. Sản phẩm đã tạo (<code>output/</code>)</h2>
+          <button type="button" id="btn-refresh" class="btn-ghost">Làm mới</button>
+        </div>
+        <div id="projects-list" class="projects-list"></div>
+
+        <div id="shotlist-preview" class="shotlist-box hidden">
+          <div class="label-row">
+            <strong>📄 Kịch bản phân cảnh (<code>shotlist.md</code>)</strong>
+            <button type="button" id="btn-close-shotlist" class="btn-ghost">Đóng</button>
+          </div>
+          <pre id="shotlist-content"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

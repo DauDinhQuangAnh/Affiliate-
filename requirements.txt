@@ -3,3 +3,5 @@ gTTS>=2.5.0
 numpy>=1.24.0
 scipy>=1.10.0
 soundfile>=0.12.0
+fastapi>=0.110.0
+uvicorn>=0.27.0

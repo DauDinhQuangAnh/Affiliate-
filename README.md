@@ -17,10 +17,24 @@ Affiliate/
 │               ├── banned-words.md               # Từ cấm & từ thay thế an toàn
 │               └── tts-rules.md                  # Quy tắc chuẩn hóa văn bản TTS
 ├── scripts/
-│   └── generate_voice.py                         # Tool sinh giọng đọc TTS qua edge-tts
+│   └── generate_voice.py                         # Tool sinh giọng đọc TTS v2.0 Pro
+├── web/
+│   ├── app.py                                    # Backend Web Studio (FastAPI)
+│   └── static/                                   # Giao diện Web (HTML/CSS/JS)
 ├── requirements.txt                              # Thư viện phụ thuộc Python
 └── .gitignore
 ```
+
+---
+
+## 🌐 Giao diện Web Studio (Chạy trực tiếp trên trình duyệt)
+
+Khởi động Web UI để nhập kịch bản, quét từ cấm, chọn 1 trong 12 giọng (hoặc Random), chỉnh tốc độ và nghe thử trực tiếp MP3:
+
+```bash
+python web/app.py
+```
+Sau đó mở trình duyệt tại: **http://127.0.0.1:8000**
 
 ---
 
