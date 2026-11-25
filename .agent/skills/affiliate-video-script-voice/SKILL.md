@@ -103,11 +103,12 @@ python scripts/generate_voice.py \
 > [!NOTE]
 > - Nếu môi trường mặc định chưa nhận diện lệnh `python`, sử dụng đường dẫn Python đầy đủ:
 >   `D:\hoctap\python\python.exe scripts/generate_voice.py --input "output/<slug-ten-san-pham>/voice.txt" --output "output/<slug-ten-san-pham>/voice.mp3" --voice random --speed 1.25`
-> - **Cơ chế RANDOM giọng đọc (`--voice random`):** Tự động bốc ngẫu nhiên 1 trong kho **10 giọng đọc tiếng Việt** (Nam dứt khoát, Nữ truyền cảm, Nữ hiện đại, Nam công nghệ, Nữ tươi tắn, Nam trầm ấm, Nữ nhí nhảnh...) giúp kho nội dung Affiliate phong phú và tự nhiên.
+> - **Cơ chế RANDOM giọng đọc (`--voice random`):** Tự động bốc ngẫu nhiên 1 trong kho **12 giọng đọc tiếng Việt** (bao gồm 5 giọng phong cách TikTok Review: `tiktok-co-gai`, `tiktok-thanh-nien`, `tiktok-chi-google`, `tiktok-genz`, `tiktok-mc-chot-don`, cùng 7 giọng review chuyên sâu) giúp kho nội dung Affiliate phong phú và tự nhiên.
 > - **Tùy chọn lọc giọng theo tệp sản phẩm:**
+>   - Chọn ngẫu nhiên phong cách TikTok Review bắt tai: `--voice tiktok`.
 >   - Đồ gia dụng, mẹ bé, mỹ phẩm, thời trang nữ: `--voice nu` (ngẫu nhiên 1 giọng nữ).
 >   - Đồ công nghệ, cơ khí, dụng cụ, đồ chơi, xe: `--voice nam` (ngẫu nhiên 1 giọng nam).
-> - **Tốc độ đọc nhanh chuẩn video ngắn (`--speed 1.25`):** Tự động cắt tỉa khoảng lặng thừa (dead air) và tăng tốc độ 25% bằng Phase Vocoder, giữ nguyên cao độ tự nhiên, nhịp điệu dứt khoát.
+> - **Audio Mastering chuẩn TikTok:** Tự động cắt khoảng lặng thừa (dead air), tăng tốc độ (`1.22x - 1.28x`) bằng Phase Vocoder, tăng cường dải tần Vocal Clarity (`2.2kHz - 5kHz`) và chuẩn hóa âm lượng `-1.0 dBFS`.
 > - **Chạy độc lập kiểm tra danh sách giọng:** `python scripts/generate_voice.py --list-voices`
 
 ---

@@ -56,40 +56,40 @@ Thư mục Skill nằm tại `.agent/skills/affiliate-video-script-voice/`. Khi 
 
 ---
 
-## 🎙️ Kho 10 Giọng đọc Tiếng Việt & Sử dụng Script riêng lẻ
+## 🎙️ Kho 12 Giọng đọc Tiếng Việt & Audio Mastering (v2.0 Pro)
 
-Script hỗ trợ kho **10 giọng đọc tiếng Việt đa dạng phong cách** phù hợp từng dòng sản phẩm khác nhau.
+Script hỗ trợ kho **12 giọng đọc tiếng Việt đa phong cách** (an toàn tuyệt đối với Symantec/Firewall) kèm bộ hậu kỳ Audio Mastering tự động (Dead-air trim + Vocal Clarity EQ + Normalize `-1 dBFS`).
 
-### Danh sách 10 giọng đọc có sẵn:
+### Danh sách 12 giọng đọc có sẵn:
 
-| Tên giọng (`--voice`) | Giới tính | Phong cách & Sản phẩm phù hợp |
-| :--- | :--- | :--- |
-| `nu-truyen-cam` | Nữ | Miền Bắc ngọt ngào, truyền cảm (Gia dụng, Mẹ bé, Mỹ phẩm) |
-| `nam-dut-khoat` | Nam | Miền Bắc dứt khoát, tin cậy (Gia dụng, Dụng cụ tiện ích) |
-| `nu-hien-dai` | Nữ | Hiện đại, phát âm mượt mà (Phụ kiện, Decor, Công nghệ nhẹ) |
-| `nam-cong-nghe` | Nam | Trẻ trung, review đồ điện tử (Tai nghe, Cáp sạc, Smart device) |
-| `nu-tuoi-tan` | Nữ | Năng động, vui tươi (Thời trang, Đồ ăn vặt, Phụ kiện xinh) |
-| `nam-soi-noi` | Nam | Hào hứng, lôi cuốn (Đồ chơi, Phụ kiện xe, Thể thao) |
-| `nu-ro-chu` | Nữ | Tròn vành rõ chữ, tự nhiên, ổn định tuyệt đối (Review tổng hợp) |
-| `nam-tram-am` | Nam | Trầm ấm áp, thuyết phục cao (Đồ gia đình, Sản phẩm giá trị) |
-| `nu-nhi-nhanh` | Nữ | Trẻ trung, bắt tai, hợp tệp học sinh sinh viên Gen Z |
-| `nam-tin-cay` | Nam | Chững chạc, uy tín, tạo độ tin tưởng chốt đơn cao |
+| Tên giọng (`--voice`) | Giới tính | Tốc độ mặc định | Phong cách & Sản phẩm phù hợp |
+| :--- | :--- | :--- | :--- |
+| `tiktok-co-gai` | Nữ | `1.28x` | Phong cách TikTok Cô gái hoạt ngôn: sáng rõ, cuốn hút |
+| `tiktok-thanh-nien` | Nam | `1.25x` | Phong cách TikTok Thanh niên tự tin: dứt khoát, rõ ràng |
+| `tiktok-chi-google` | Nữ | `1.28x` | Phong cách Chị Google huyền thoại: nhịp nhanh, tròn chữ |
+| `tiktok-genz` | Nữ | `1.28x` | Phong cách Gen Z tươi trẻ, nhí nhảnh, năng động |
+| `tiktok-mc-chot-don` | Nam | `1.22x` | Phong cách MC trầm ấm, thuyết phục cao |
+| `nu-truyen-cam` | Nữ | `1.22x` | Miền Bắc ngọt ngào, truyền cảm (Gia dụng, Mẹ bé, Mỹ phẩm) |
+| `nam-dut-khoat` | Nam | `1.25x` | Miền Bắc dứt khoát, tin cậy (Dụng cụ, Đồ gia dụng) |
+| `nu-hien-dai` | Nữ | `1.25x` | Hiện đại, phát âm từ mượn mượt mà (Decor, Phụ kiện) |
+| `nam-cong-nghe` | Nam | `1.25x` | Trẻ trung, review đồ điện tử (Tai nghe, Cáp sạc, Smart home) |
+| `nu-tuoi-tan` | Nữ | `1.26x` | Tươi tắn, dễ thương (Mỹ phẩm, Phụ kiện xinh) |
+| `nam-soi-noi` | Nam | `1.26x` | Hào hứng, lôi cuốn (Đồ chơi, Phụ kiện xe, Thể thao) |
+| `nam-tin-cay` | Nam | `1.20x` | Giọng trầm chững chạc, uy tín (Thiết bị sức khỏe, Điện máy) |
 
 ### Cách sử dụng dòng lệnh:
 
 ```bash
-# 1. Triển khai thực tế: Chọn giọng NGẪU NHIÊN trong 10 giọng (Mặc định)
+# 1. Triển khai thực tế: Chọn giọng NGẪU NHIÊN trong 12 giọng (Mặc định)
 python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice random
 
-# 2. Chọn ngẫu nhiên 1 giọng Nữ (Mỹ phẩm, Gia dụng, Mẹ bé)
-python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nu
+# 2. Chọn ngẫu nhiên trong nhóm 5 giọng phong cách TikTok Review
+python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice tiktok
 
-# 3. Chọn ngẫu nhiên 1 giọng Nam (Công nghệ, Dụng cụ, Đồ chơi)
+# 3. Chọn ngẫu nhiên 1 giọng Nữ / Nam
+python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nu
 python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nam
 
-# 4. Chỉ định đích danh một giọng cố định:
-python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nu-hien-dai --speed 1.25
-
-# 5. Xem danh sách toàn bộ giọng:
+# 4. Xem danh sách toàn bộ giọng:
 python scripts/generate_voice.py --list-voices
 ```

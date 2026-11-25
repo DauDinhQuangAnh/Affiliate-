@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Script chuyển văn bản thành giọng đọc (Text-to-Speech) chuyên dụng cho video Affiliate.
-Hỗ trợ:
-- Kho 10 giọng đọc tiếng Việt (Nam / Nữ / Đa phong cách).
+Script chuyển văn bản thành giọng đọc (Text-to-Speech) chuyên dụng cho video Affiliate (v2.0 Pro).
+Tính năng nổi bật:
+- An toàn 100% với môi trường có Symantec / Firewall (chỉ dùng nguồn chính thống Google & Microsoft).
+- Kho 12 giọng đọc tiếng Việt đa phong cách (bao gồm phong cách TikTok Review, Chị Google, MC Chốt đơn...).
 - Cơ chế RANDOM giọng ngẫu nhiên khi sản xuất hàng loạt video.
-- Tự động fallback giữa Edge TTS và Google TTS để đạt tỷ lệ thành công 100%.
-- Tăng tốc độ nói chuyên nghiệp (Phase Vocoder, giữ nguyên cao độ).
-- Tự động cắt tỉa khoảng lặng thừa (dead air) giúp video sôi động, cuốn hút.
+- Bộ Audio Mastering chuẩn TikTok: Cắt khoảng lặng chết + Phase Vocoder tăng tốc + EQ Vocal Boost + Chuẩn hóa âm lượng -1 dBFS.
 """
 
 import argparse
@@ -19,92 +18,122 @@ import numpy as np
 
 
 # ==============================================================================
-# BẢNG ĐẶC TẢ CÁC GIỌNG ĐỌC TIẾNG VIỆT CHO VIDEO AFFILIATE
+# BẢNG ĐẶC TẢ 12 PROFILE GIỌNG ĐỌC TIẾNG VIỆT CHO VIDEO AFFILIATE
 # ==============================================================================
 VOICE_PROFILES = {
-    # 1. Giọng Nữ truyền cảm (Edge TTS)
+    # --- NHÓM PHONG CÁCH TIKTOK REVIEW (NỔI BẬT, BẮT TAI) ---
+    "tiktok-co-gai": {
+        "engine": "edge",
+        "voice_id": "vi-VN-HoaiMyNeural",
+        "gender": "female",
+        "desc": "Phong cách TikTok Cô gái hoạt ngôn: sáng rõ, cuốn hút (Gia dụng, Mỹ phẩm)",
+        "pitch_shift": 0.6,
+        "default_speed": 1.28,
+        "eq_boost": 0.28,
+    },
+    "tiktok-thanh-nien": {
+        "engine": "edge",
+        "voice_id": "vi-VN-NamMinhNeural",
+        "gender": "male",
+        "desc": "Phong cách TikTok Thanh niên tự tin: dứt khoát, rõ ràng (Công nghệ, Tiện ích)",
+        "pitch_shift": -1.8,
+        "default_speed": 1.25,
+        "eq_boost": 0.25,
+    },
+    "tiktok-chi-google": {
+        "engine": "gtts",
+        "voice_id": "gtts-standard",
+        "gender": "female",
+        "desc": "Phong cách Chị Google huyền thoại: nhịp nhanh, tròn vành rõ chữ (Review tổng hợp)",
+        "pitch_shift": 0.0,
+        "default_speed": 1.28,
+        "eq_boost": 0.30,
+    },
+    "tiktok-genz": {
+        "engine": "gtts",
+        "voice_id": "gtts-young",
+        "gender": "female",
+        "desc": "Phong cách Gen Z tươi trẻ, nhí nhảnh, năng động (Đồ ăn vặt, Thời trang, Phụ kiện)",
+        "pitch_shift": 1.4,
+        "default_speed": 1.28,
+        "eq_boost": 0.28,
+    },
+    "tiktok-mc-chot-don": {
+        "engine": "gtts",
+        "voice_id": "gtts-male",
+        "gender": "male",
+        "desc": "Phong cách MC trầm ấm, thuyết phục cao (Đồ gia đình, Sản phẩm giá trị cao)",
+        "pitch_shift": -2.8,
+        "default_speed": 1.22,
+        "eq_boost": 0.22,
+    },
+
+    # --- NHÓM GIỌNG REVIEW CHUYÊN SÂU & ĐA DẠNG ---
     "nu-truyen-cam": {
         "engine": "edge",
         "voice_id": "vi-VN-HoaiMyNeural",
         "gender": "female",
-        "desc": "Nữ miền Bắc ngọt ngào, truyền cảm (Gia dụng, Mẹ bé, Mỹ phẩm)",
+        "desc": "Nữ miền Bắc ngọt ngào, truyền cảm (Mẹ & Bé, Skincare, Chăm sóc cá nhân)",
         "pitch_shift": 0.0,
+        "default_speed": 1.22,
+        "eq_boost": 0.20,
     },
-    # 2. Giọng Nam dứt khoát (Edge TTS)
     "nam-dut-khoat": {
         "engine": "edge",
         "voice_id": "vi-VN-NamMinhNeural",
         "gender": "male",
-        "desc": "Nam miền Bắc dứt khoát, tin cậy (Gia dụng, Dụng cụ, Đời sống)",
+        "desc": "Nam miền Bắc dứt khoát, tin cậy (Dụng cụ sửa chữa, Đồ gia dụng thông minh)",
         "pitch_shift": 0.0,
+        "default_speed": 1.25,
+        "eq_boost": 0.25,
     },
-    # 3. Giọng Nữ hiện đại (Edge Multilingual)
     "nu-hien-dai": {
         "engine": "edge",
         "voice_id": "en-US-EmmaMultilingualNeural",
         "gender": "female",
-        "desc": "Nữ hiện đại, phát âm mượt mà (Phụ kiện, Decor, Công nghệ nhẹ)",
+        "desc": "Nữ hiện đại, phát âm từ mượn mượt mà (Decor phòng, Phụ kiện tối giản)",
         "pitch_shift": 0.0,
+        "default_speed": 1.25,
+        "eq_boost": 0.25,
     },
-    # 4. Giọng Nam công nghệ (Edge Multilingual)
     "nam-cong-nghe": {
         "engine": "edge",
         "voice_id": "en-US-AndrewMultilingualNeural",
         "gender": "male",
-        "desc": "Nam trẻ trung, review đồ công nghệ (Tai nghe, Cáp sạc, Smart device)",
-        "pitch_shift": 0.0,
+        "desc": "Nam trẻ trung chuyên review công nghệ (Tai nghe, Sạc dự phòng, Smart home)",
+        "pitch_shift": -1.2,
+        "default_speed": 1.25,
+        "eq_boost": 0.25,
     },
-    # 5. Giọng Nữ tươi tắn (Edge Multilingual)
     "nu-tuoi-tan": {
         "engine": "edge",
         "voice_id": "en-US-AvaMultilingualNeural",
         "gender": "female",
-        "desc": "Nữ năng động, nhí nhảnh (Thời trang, Đồ ăn vặt, Phụ kiện xinh)",
-        "pitch_shift": 0.0,
+        "desc": "Nữ tươi tắn, dễ thương (Mỹ phẩm, Phụ kiện tóc, Túi xách)",
+        "pitch_shift": 0.8,
+        "default_speed": 1.26,
+        "eq_boost": 0.25,
     },
-    # 6. Giọng Nam sôi nổi (Edge Multilingual)
     "nam-soi-noi": {
         "engine": "edge",
         "voice_id": "en-US-BrianMultilingualNeural",
         "gender": "male",
-        "desc": "Nam hào hứng, lôi cuốn (Đồ chơi, Phụ kiện xe, Thể thao)",
-        "pitch_shift": 0.0,
+        "desc": "Nam hào hứng, nhịp điệu lôi cuốn (Đồ chơi, Phụ kiện xe, Thể thao)",
+        "pitch_shift": -1.5,
+        "default_speed": 1.26,
+        "eq_boost": 0.28,
     },
-    # 7. Giọng Nữ rõ chữ (Google TTS chuẩn)
-    "nu-ro-chu": {
-        "engine": "gtts",
-        "voice_id": "gtts-standard",
-        "gender": "female",
-        "desc": "Nữ tròn vành rõ chữ, tự nhiên, ổn định tuyệt đối (Review tổng hợp)",
-        "pitch_shift": 0.0,
-    },
-    # 8. Giọng Nam trầm ấm (Google TTS + Pitch Shift)
-    "nam-tram-am": {
-        "engine": "gtts",
-        "voice_id": "gtts-male",
-        "gender": "male",
-        "desc": "Nam trầm ấm áp, thuyết phục cao (Đồ gia đình, Sản phẩm sức khỏe)",
-        "pitch_shift": -2.8,
-    },
-    # 9. Giọng Nữ nhí nhảnh (Google TTS + Pitch Shift)
-    "nu-nhi-nhanh": {
-        "engine": "gtts",
-        "voice_id": "gtts-young",
-        "gender": "female",
-        "desc": "Nữ trẻ trung, bắt tai, hợp tệp học sinh sinh viên Gen Z",
-        "pitch_shift": 1.4,
-    },
-    # 10. Giọng Nam tin cậy (Google TTS + Pitch Shift)
     "nam-tin-cay": {
         "engine": "gtts",
         "voice_id": "gtts-deep",
         "gender": "male",
-        "desc": "Nam chững chạc, uy tín, dễ chốt đơn đơn hàng giá trị cao",
-        "pitch_shift": -4.0,
+        "desc": "Nam giọng trầm chững chạc, uy tín (Thiết bị sức khỏe, Điện máy)",
+        "pitch_shift": -3.8,
+        "default_speed": 1.20,
+        "eq_boost": 0.22,
     },
 }
 
-# Alias tra cứu nhanh
 VOICE_ALIASES = {
     "hoaimy": "nu-truyen-cam",
     "namminh": "nam-dut-khoat",
@@ -112,7 +141,11 @@ VOICE_ALIASES = {
     "andrew": "nam-cong-nghe",
     "ava": "nu-tuoi-tan",
     "brian": "nam-soi-noi",
-    "gtts": "nu-ro-chu",
+    "chigoogle": "tiktok-chi-google",
+    "gtts": "tiktok-chi-google",
+    "cogai": "tiktok-co-gai",
+    "thanhnien": "tiktok-thanh-nien",
+    "genz": "tiktok-genz",
 }
 
 
@@ -120,46 +153,54 @@ def pick_voice(requested: str) -> tuple[str, dict]:
     """Chọn giọng đọc dựa trên yêu cầu (cụ thể, theo giới tính hoặc ngẫu nhiên)."""
     req = requested.strip().lower()
 
-    # Xử lý alias
     if req in VOICE_ALIASES:
         req = VOICE_ALIASES[req]
 
-    # Nếu chỉ định rõ 1 giọng trong danh sách
     if req in VOICE_PROFILES:
         return req, VOICE_PROFILES[req]
 
-    # Nếu yêu cầu ngẫu nhiên giọng Nam
     if req in ("nam", "male"):
         male_keys = [k for k, v in VOICE_PROFILES.items() if v["gender"] == "male"]
         chosen = random.choice(male_keys)
         return chosen, VOICE_PROFILES[chosen]
 
-    # Nếu yêu cầu ngẫu nhiên giọng Nữ
     if req in ("nu", "female"):
         female_keys = [k for k, v in VOICE_PROFILES.items() if v["gender"] == "female"]
         chosen = random.choice(female_keys)
         return chosen, VOICE_PROFILES[chosen]
 
-    # Mặc định: Chọn ngẫu nhiên hoàn toàn (Random) trong 10 giọng
+    if req == "tiktok":
+        tiktok_keys = [k for k in VOICE_PROFILES if k.startswith("tiktok-")]
+        chosen = random.choice(tiktok_keys)
+        return chosen, VOICE_PROFILES[chosen]
+
     chosen = random.choice(list(VOICE_PROFILES.keys()))
     return chosen, VOICE_PROFILES[chosen]
 
 
 # ==============================================================================
-# XỬ LÝ ÂM THANH: TĂNG TỐC ĐỘ, CẮT KHOẢNG LẶNG & DỊCH CAO ĐỘ (PITCH SHIFT)
+# AUDIO MASTERING: DEAD AIR TRIMMING + PITCH/SPEED + EQ VOCAL BOOST + NORMALIZE
 # ==============================================================================
-def post_process_audio(audio_path: str, speed_factor: float = 1.25, pitch_shift_semitones: float = 0.0, max_pause_sec: float = 0.18):
+def post_process_audio(
+    audio_path: str,
+    speed_factor: float = 1.25,
+    pitch_shift_semitones: float = 0.0,
+    eq_boost: float = 0.25,
+    max_pause_sec: float = 0.16,
+):
     """
-    Tối ưu hóa âm thanh:
-    1. Cắt tỉa khoảng lặng thừa giữa các câu.
-    2. Tăng tốc độ nói bằng Phase Vocoder (pitch-preserved).
-    3. Dịch cao độ nếu cần (để biến đổi giọng nam/nữ theo profile).
+    Hậu kỳ âm thanh chuẩn TikTok/Shopee Video:
+    1. Cắt tỉa khoảng lặng thừa (dead air) xuống tối đa max_pause_sec.
+    2. Dịch cao độ (Pitch Shift) theo profile giọng nếu cần.
+    3. Tăng tốc độ nói bằng Phase Vocoder (pitch-preserved).
+    4. High-pass filter (85Hz) + Vocal Presence Boost (2.2kHz - 5kHz) cho tiếng thoát nền nhạc.
+    5. Chuẩn hóa âm lượng (Peak Normalization về -1.0 dBFS).
     """
     try:
         import soundfile as sf
         from scipy import signal
     except ImportError:
-        print("[WARN] Thiếu soundfile hoặc scipy, bỏ qua khâu xử lý âm thanh hậu kỳ.")
+        print("[WARN] Thiếu soundfile hoặc scipy, bỏ qua khâu hậu kỳ âm thanh.")
         return
 
     try:
@@ -175,8 +216,7 @@ def post_process_audio(audio_path: str, speed_factor: float = 1.25, pitch_shift_
         trimmed = []
         silent_count = 0
         for c in chunks:
-            is_silent = np.max(np.abs(c)) < threshold
-            if is_silent:
+            if np.max(np.abs(c)) < threshold:
                 silent_count += 1
                 if silent_count <= max_silent_chunks:
                     trimmed.append(c)
@@ -186,20 +226,21 @@ def post_process_audio(audio_path: str, speed_factor: float = 1.25, pitch_shift_
 
         cur_data = np.concatenate(trimmed) if trimmed else data
 
-        # 2. Dịch cao độ (Pitch Shift) nếu có cấu hình
+        # 2. Dịch cao độ (Pitch Shift) nếu có
+        eff_speed = speed_factor
         if pitch_shift_semitones != 0.0:
             p_factor = 2.0 ** (pitch_shift_semitones / 12.0)
             new_len = int(len(cur_data) / p_factor)
             cur_data = signal.resample(cur_data, new_len)
-            speed_factor = speed_factor * p_factor
+            eff_speed = speed_factor * p_factor
 
         # 3. Phase Vocoder time stretch
-        if abs(speed_factor - 1.0) > 0.01:
+        if abs(eff_speed - 1.0) > 0.01:
             n_fft = 1024
             hop_length = n_fft // 4
             _, _, stft = signal.stft(cur_data, fs=sr, nperseg=n_fft, noverlap=n_fft - hop_length)
 
-            time_steps = np.arange(0, stft.shape[1] - 1, speed_factor)
+            time_steps = np.arange(0, stft.shape[1] - 1, eff_speed)
             phase_acc = np.angle(stft[:, 0])
             stretched = np.zeros((stft.shape[0], len(time_steps)), dtype=complex)
             expected_adv = 2 * np.pi * hop_length * np.arange(stft.shape[0]) / n_fft
@@ -215,20 +256,34 @@ def post_process_audio(audio_path: str, speed_factor: float = 1.25, pitch_shift_
 
             _, cur_data = signal.istft(stretched, fs=sr, nperseg=n_fft, noverlap=n_fft - hop_length)
 
+        # 4. Vocal Clarity EQ (High-pass 85Hz + Presence Boost 2.2kHz-5kHz)
+        sos_hp = signal.butter(2, 85, btype="highpass", fs=sr, output="sos")
+        cur_data = signal.sosfilt(sos_hp, cur_data)
+
+        if eq_boost > 0:
+            sos_bp = signal.butter(2, [2200, 5000], btype="bandpass", fs=sr, output="sos")
+            presence = signal.sosfilt(sos_bp, cur_data)
+            cur_data = cur_data + eq_boost * presence
+
+        # 5. Peak Normalization (-1.0 dBFS ~ 0.891)
+        max_val = np.max(np.abs(cur_data))
+        if max_val > 0:
+            cur_data = cur_data * (0.891 / max_val)
+
         sf.write(audio_path, cur_data, sr)
         new_duration = len(cur_data) / sr
-        print(f"[POST-PROCESS] Tối ưu nhịp điệu hoàn tất:")
-        print(f"  - Thời lượng gốc : {orig_duration:.2f}s")
-        print(f"  - Thời lượng mới : {new_duration:.2f}s (chuẩn nhịp video ngắn cuốn hút)")
+        print(f"[MASTERING] Hậu kỳ âm thanh chuẩn TikTok hoàn tất:")
+        print(f"  - Thời lượng gốc : {orig_duration:.2f}s -> Mới: {new_duration:.2f}s")
+        print(f"  - Xử lý          : Dead-air trim + Vocal EQ Boost + Normalize -1 dBFS")
     except Exception as e:
-        print(f"[WARN] Lỗi khi xử lý âm thanh hậu kỳ: {e}", file=sys.stderr)
+        print(f"[WARN] Lỗi khi hậu kỳ âm thanh: {e}", file=sys.stderr)
 
 
 # ==============================================================================
-# CÁC ENGINE TẠO GIỌNG ĐỌC
+# CÁC ENGINE TẠO GIỌNG ĐỌC (AN TOÀN TUYỆT ĐỐI VỚI SYMANTEC)
 # ==============================================================================
 def synthesize_with_gtts(text: str, output_path: str, lang: str = "vi") -> bool:
-    """Sinh giọng đọc bằng Google TTS (HTTPS, độ ổn định cực cao)."""
+    """Sinh giọng đọc bằng Google TTS (HTTPS chuẩn, không bị Symantec chặn)."""
     try:
         from gtts import gTTS
         print(f"[TTS:gTTS] Đang tạo giọng đọc qua Google TTS...")
@@ -242,18 +297,18 @@ def synthesize_with_gtts(text: str, output_path: str, lang: str = "vi") -> bool:
     return False
 
 
-async def synthesize_with_edge(text: str, output_path: str, voice_id: str, rate: str = "+25%") -> bool:
-    """Sinh giọng đọc bằng Edge TTS (có timeout 5s để chuyển fallback nhanh chóng)."""
+async def synthesize_with_edge(text: str, output_path: str, voice_id: str, rate: str = "+0%") -> bool:
+    """Sinh giọng đọc bằng Edge TTS (timeout 6s để tự chuyển fallback nếu mạng nghẽn)."""
     try:
         import edge_tts
-        print(f"[TTS:Edge] Đang kết nối Edge TTS (Voice: {voice_id}, Tốc độ: {rate})...")
+        print(f"[TTS:Edge] Đang kết nối Edge TTS (Voice: {voice_id})...")
         communicate = edge_tts.Communicate(text=text, voice=voice_id, rate=rate)
         await asyncio.wait_for(communicate.save(output_path), timeout=6.0)
         if os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
             print(f"[TTS:Edge] Tạo âm thanh thành công ({os.path.getsize(output_path)} bytes)")
             return True
     except asyncio.TimeoutError:
-        print("[TTS:Edge] Microsoft phản hồi quá chậm (> 6s), chuyển sang fallback...")
+        print("[TTS:Edge] Microsoft phản hồi chậm (> 6s), chuyển sang fallback...")
     except Exception as e:
         print(f"[TTS:Edge] Không nhận được audio từ Microsoft: {e}")
     return False
@@ -266,7 +321,7 @@ async def generate_voice(
     text_path: str,
     output_path: str,
     voice_request: str = "random",
-    speed: float = 1.25,
+    speed: float = None,
     engine_override: str = "auto"
 ):
     if not os.path.exists(text_path):
@@ -284,40 +339,43 @@ async def generate_voice(
     if out_dir and not os.path.exists(out_dir):
         os.makedirs(out_dir, exist_ok=True)
 
-    # Chọn giọng đọc (random hoặc chỉ định)
     voice_key, profile = pick_voice(voice_request)
+    target_speed = speed if speed is not None else profile.get("default_speed", 1.25)
 
-    rate_percent = int((speed - 1.0) * 100)
-    rate_str = f"+{rate_percent}%" if rate_percent >= 0 else f"{rate_percent}%"
-
-    print("=" * 70)
-    print(f"🎬 BẮT ĐẦU TẠO GIỌNG ĐỌC CHO VIDEO AFFILIATE")
+    print("=" * 72)
+    print(f"🎬 BẮT ĐẦU TẠO GIỌNG ĐỌC CHO VIDEO AFFILIATE (v2.0 Pro)")
     print(f"  - File văn bản    : {text_path}")
     print(f"  - File âm thanh   : {output_path}")
     print(f"  - Giọng đọc chọn  : [{voice_key}] - {profile['desc']}")
-    print(f"  - Tốc độ đọc      : {speed}x (+{rate_percent}%)")
-    print("=" * 70)
+    print(f"  - Tốc độ mục tiêu : {target_speed}x")
+    print("=" * 72)
 
     success = False
     used_engine = profile["engine"] if engine_override == "auto" else engine_override
 
-    # 1. Thử với Edge TTS nếu profile thuộc edge hoặc engine_override = edge
     if used_engine == "edge" or engine_override == "edge":
         voice_id = profile["voice_id"] if profile["engine"] == "edge" else "vi-VN-NamMinhNeural"
-        success = await synthesize_with_edge(text, output_path, voice_id=voice_id, rate=rate_str)
+        # Truyền rate mặc định +0% để hậu kỳ Phase Vocoder xử lý đồng nhất tốc độ & pitch
+        success = await synthesize_with_edge(text, output_path, voice_id=voice_id, rate="+0%")
 
-    # 2. Fallback sang Google TTS nếu Edge không thành công hoặc engine là gtts
     if not success:
         if used_engine == "edge":
             print("[INFO] Tự động kích hoạt Google TTS (Fallback) để đảm bảo thành công...")
         success = synthesize_with_gtts(text, output_path, lang="vi")
 
-    # 3. Tối ưu hóa nhịp điệu (cắt khoảng lặng + chuẩn hóa tốc độ) cho tất cả audio
     if success:
+        # Áp dụng Mastering + Pitch/Speed đồng nhất cho mọi engine
+        effective_pitch = profile.get("pitch_shift", 0.0)
+        # Nếu Edge TTS thành công trên đúng giọng gốc thì chỉ tinh chỉnh nhẹ hoặc giữ pitch gốc
+        if used_engine == "edge" and os.path.exists(output_path) and profile["engine"] == "edge":
+            # Khi chạy được đúng giọng neural gốc, giảm nhẹ độ lệch pitch
+            effective_pitch = effective_pitch * 0.5
+
         post_process_audio(
             output_path,
-            speed_factor=speed,
-            pitch_shift_semitones=profile.get("pitch_shift", 0.0)
+            speed_factor=target_speed,
+            pitch_shift_semitones=effective_pitch,
+            eq_boost=profile.get("eq_boost", 0.25),
         )
 
     if success and os.path.exists(output_path) and os.path.getsize(output_path) > 1000:
@@ -325,7 +383,7 @@ async def generate_voice(
         print(f"\n🎉 HOÀN THÀNH XUẤT SẮC!")
         print(f"  - File âm thanh : {output_path}")
         print(f"  - Dung lượng    : {file_size_kb:.1f} KB")
-        print(f"  - Giọng đọc     : {voice_key} ({profile['desc']})")
+        print(f"  - Giọng đọc     : {voice_key}")
     else:
         print(f"\n[ERROR] Không thể tạo file audio! Vui lòng kiểm tra lại kết nối mạng.", file=sys.stderr)
         sys.exit(1)
@@ -333,37 +391,37 @@ async def generate_voice(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Chuyển file voice.txt thành audio voice.mp3 với kho giọng đọc tiếng Việt đa dạng cho video Affiliate."
+        description="Chuyển file voice.txt thành audio voice.mp3 chuẩn TikTok Mastering (v2.0 Pro)."
     )
     parser.add_argument("--input", "-i", required=False, help="Đường dẫn file voice.txt đầu vào")
     parser.add_argument("--output", "-o", required=False, help="Đường dẫn file voice.mp3 đầu ra")
     parser.add_argument(
         "--voice", "-v", default="random",
-        help="Giọng đọc: 'random' (mặc định ngẫu nhiên trong 10 giọng), 'nam' (ngẫu nhiên giọng nam), 'nu' (ngẫu nhiên giọng nữ), hoặc tên giọng cụ thể (ví dụ: 'nam-dut-khoat', 'nu-truyen-cam', 'nu-hien-dai', 'nam-cong-nghe', 'nam-tram-am', 'nu-nhi-nhanh'...)"
+        help="Giọng đọc: 'random' (mặc định ngẫu nhiên 12 giọng), 'tiktok' (ngẫu nhiên phong cách TikTok), 'nam', 'nu', hoặc tên cụ thể"
     )
     parser.add_argument(
-        "--speed", "-s", type=float, default=1.25,
-        help="Tốc độ nói (Mặc định: 1.25x - tăng 25%% phù hợp nhịp điệu nhanh, dứt khoát của video ngắn)"
+        "--speed", "-s", type=float, default=None,
+        help="Tốc độ nói (Mặc định tự động tối ưu theo từng profile từ 1.22x - 1.28x)"
     )
     parser.add_argument(
         "--engine", "-e", choices=["auto", "edge", "gtts"], default="auto",
-        help="Engine TTS: 'auto' (thông minh tự chọn và fallback), 'edge', hoặc 'gtts'"
+        help="Engine TTS: 'auto' (khuyến nghị), 'edge', hoặc 'gtts'"
     )
     parser.add_argument(
         "--list-voices", action="store_true",
-        help="Hiển thị danh sách 10 giọng đọc tiếng Việt có sẵn và thoát"
+        help="Hiển thị danh sách 12 profile giọng đọc tiếng Việt và thoát"
     )
 
     args = parser.parse_args()
 
     if args.list_voices:
-        print("\n=== DANH SÁCH 10 GIỌNG ĐỌC TIẾNG VIỆT CHO VIDEO AFFILIATE ===")
+        print("\n=== KHO 12 GIỌNG ĐỌC TIẾNG VIỆT CHUẨN TIKTOK / AFFILIATE ===")
         for key, p in VOICE_PROFILES.items():
-            print(f"- {key:<15} ({p['gender'].upper()}): {p['desc']}")
+            print(f"- {key:<20} ({p['gender'].upper():<6}) [{p['default_speed']}x]: {p['desc']}")
         print("\nCách dùng:")
         print("  python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice random")
-        print("  python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nam")
-        print("  python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nu\n")
+        print("  python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice tiktok")
+        print("  python scripts/generate_voice.py --input voice.txt --output voice.mp3 --voice nam\n")
         return
 
     if not args.input or not args.output:
