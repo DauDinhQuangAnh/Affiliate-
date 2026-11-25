@@ -2,68 +2,65 @@
 # -*- coding: utf-8 -*-
 """
 Web Studio Server (FastAPI) cho Affiliate Video Script & Voice Generator.
-Cho phép thao tác trực quan qua trình duyệt: nhập/chỉnh kịch bản, kiểm tra từ cấm,
-chọn 12 giọng tiếng Việt (hoặc Random), chỉnh tốc độ, tạo & nghe thử trực tiếp MP3.
+Hỗ trợ quy trình đầy đủ: Nhập sản phẩm -> Tự sinh kịch bản & Shotlist ->
+Quét & tự sửa từ cấm -> Chuẩn hóa TTS -> Tạo & Nghe thử MP3 -> Quản lý output/.
 """
 
 import os
-import re
+import shutil
 import sys
 import time
-import unicodedata
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-# Thêm thư mục scripts/ vào sys.path để tái sử dụng logic TTS v2.0 Pro
 BASE_DIR = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = BASE_DIR / "scripts"
 OUTPUT_DIR = BASE_DIR / "output"
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
 sys.path.insert(0, str(SCRIPTS_DIR))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import generate_voice as tts_core  # noqa: E402
+import script_engine  # noqa: E402
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="Affiliate Voice & Script Studio", version="2.0.0")
+app = FastAPI(title="Affiliate Voice & Script Studio", version="2.1.0")
+
+
+class BuildScriptRequest(BaseModel):
+    product_name: str = Field(..., min_length=1, max_length=150)
+    pain_point: str = Field(default="", max_length=300)
+    highlights: List[str] = Field(default_factory=list)
+    price_text: str = Field(default="", max_length=100)
+    hook_id: str = Field(default="pain-1")
+
+
+class TextRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=10000)
 
 
 class GenerateRequest(BaseModel):
-    slug: str = Field(..., min_length=1, max_length=100)
+    slug: str = Field(..., min_length=1, max_length=120)
     text: str = Field(..., min_length=1, max_length=5000)
     voice: str = Field(default="random")
     speed: Optional[float] = Field(default=None, ge=0.8, le=1.6)
 
 
-class CheckBannedRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=10000)
-
-
-# Danh sách cụm từ cấm phổ biến trích xuất theo references/banned-words.md
-BANNED_PATTERNS = [
-    ("Cam kết tuyệt đối", ["tốt nhất", "số 1", "số một", "đỉnh nhất", "hoàn hảo", "vô địch", "100%", "chắc chắn 100%", "vĩnh viễn", "mãi mãi", "không bao giờ hỏng", "siêu rẻ", "rẻ nhất", "giá sốc", "phá giá", "sale sập sàn", "thần thánh", "vi diệu", "kỳ diệu"]),
-    ("Y tế & Mỹ phẩm", ["trị dứt điểm", "chữa khỏi", "đặc trị", "diệt sạch", "trắng bật tông", "hết mụn", "giảm cân cấp tốc", "tan mỡ", "kháng khuẩn 99.9%", "tiêu diệt vi khuẩn", "bác sĩ khuyên dùng", "chuẩn y khoa"]),
-    ("Điều hướng nền tảng", ["shopee", "lazada", "facebook", "zalo", "inbox", "nhắn tin riêng", "link bio", "tiktok", "miễn phí 100%", "tặng free", "chuyển khoản", "hàng nhái", "fake", "rep 1:1", "siêu cấp"]),
-    ("Ngôn từ tiêu cực", ["lừa đảo", "rác rưởi", "vứt đi", "bóc phốt", "chết tiệt", "kinh khủng", "ghê tởm"]),
-]
-
-
-def slugify(value: str) -> str:
-    """Chuyển chuỗi tiếng Việt bất kỳ thành slug an toàn cho tên thư mục."""
-    value = value.replace("đ", "d").replace("Đ", "D")
-    normalized = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
-    slug = re.sub(r"[^a-zA-Z0-9]+", "-", normalized.lower()).strip("-")
-    return slug or f"san-pham-{int(time.time())}"
-
-
 @app.get("/")
 async def serve_index():
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/api/hooks")
+async def get_hooks():
+    """Trả về 12 công thức Hook chia theo 5 nhóm."""
+    return {"hooks": script_engine.HOOK_TEMPLATES}
 
 
 @app.get("/api/voices")
@@ -81,22 +78,56 @@ async def get_voices():
     return {"voices": voices}
 
 
+@app.post("/api/build-script")
+async def api_build_script(req: BuildScriptRequest):
+    """Tạo kịch bản Affiliate chuẩn 5 bước và lưu shotlist.md + voice.txt."""
+    slug = script_engine.slugify(req.product_name)
+    result = script_engine.build_affiliate_script(
+        product_name=req.product_name,
+        pain_point=req.pain_point,
+        highlights=req.highlights,
+        price_text=req.price_text,
+        hook_id=req.hook_id,
+    )
+
+    project_dir = OUTPUT_DIR / slug
+    project_dir.mkdir(parents=True, exist_ok=True)
+    (project_dir / "shotlist.md").write_text(result["shotlist_md"], encoding="utf-8")
+    (project_dir / "voice.txt").write_text(result["voice_txt"], encoding="utf-8")
+
+    return {
+        "slug": slug,
+        "shotlist_md": result["shotlist_md"],
+        "voice_txt": result["voice_txt"],
+        "word_count": result["word_count"],
+    }
+
+
 @app.post("/api/check-banned")
-async def check_banned(req: CheckBannedRequest):
-    """Kiểm tra nhanh từ cấm TikTok Shop / Shopee Video trong lời thoại."""
-    lower_text = req.text.lower()
-    matches = []
-    for group, words in BANNED_PATTERNS:
-        for w in words:
-            if w in lower_text:
-                matches.append({"group": group, "word": w})
+async def check_banned(req: TextRequest):
+    """Kiểm tra từ cấm TikTok Shop / Shopee Video."""
+    matches = script_engine.scan_banned_words(req.text)
     return {"count": len(matches), "matches": matches}
+
+
+@app.post("/api/fix-banned")
+async def fix_banned(req: TextRequest):
+    """Tự động thay thế từ cấm bằng từ an toàn."""
+    fixed_text, applied = script_engine.auto_fix_banned_words(req.text)
+    return {"text": fixed_text, "fixed_count": len(applied), "applied": applied}
+
+
+@app.post("/api/normalize-tts")
+async def normalize_tts(req: TextRequest):
+    """Chuẩn hóa văn bản cho engine TTS (số, đơn vị, phiên âm mềm)."""
+    normalized = script_engine.normalize_for_tts(req.text)
+    return {"text": normalized}
 
 
 @app.post("/api/generate")
 async def api_generate(req: GenerateRequest):
     """Lưu voice.txt và sinh file voice.mp3 bằng Dual-Engine + Audio Mastering."""
-    safe_slug = slugify(req.slug)
+    safe_slug = script_engine.slugify(req.slug)
     project_dir = OUTPUT_DIR / safe_slug
     project_dir.mkdir(parents=True, exist_ok=True)
 
@@ -109,7 +140,6 @@ async def api_generate(req: GenerateRequest):
 
     voice_txt_path.write_text(clean_text, encoding="utf-8")
 
-    # Chọn giọng trước để trả về chính xác giọng đã dùng cho UI
     chosen_key, profile = tts_core.pick_voice(req.voice)
     target_speed = req.speed if req.speed is not None else profile.get("default_speed", 1.25)
 
@@ -179,6 +209,17 @@ async def list_projects():
                 "shotlist": shotlist_content,
             })
     return {"projects": projects}
+
+
+@app.delete("/api/projects/{slug}")
+async def delete_project(slug: str):
+    """Xóa thư mục sản phẩm trong output/."""
+    safe_slug = script_engine.slugify(slug)
+    target = (OUTPUT_DIR / safe_slug).resolve()
+    if not str(target).startswith(str(OUTPUT_DIR.resolve())) or not target.exists():
+        raise HTTPException(status_code=404, detail="Không tìm thấy thư mục sản phẩm.")
+    shutil.rmtree(target)
+    return {"deleted": safe_slug}
 
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
