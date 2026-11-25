@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Nghe 14 Giọng Đọc - Affiliate Studio</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-badge">AFFILIATE STUDIO</span>
+        <h1>Phòng Test Nghe Giọng Đọc</h1>
+        <nav class="nav-tabs" aria-label="Điều hướng chính">
+          <a href="/" class="nav-tab">🎬 Tạo Kịch Bản &amp; Voice</a>
+          <a href="/voices" class="nav-tab active">🎧 Test Nghe 14 Giọng</a>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <button type="button" id="btn-test-all" class="btn-secondary-accent">
+          ⚡ Tạo nghe thử tất cả
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="voices-container">
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Câu mẫu để test &amp; so sánh chất giọng</h2>
+        <span id="test-progress" class="meta-badge">Sẵn sàng</span>
+      </div>
+      <div class="form-stack">
+        <div class="grid-2">
+          <div class="field">
+            <label for="sample-text">Câu thoại test (có thể sửa tùy ý)</label>
+            <input
+              type="text"
+              id="sample-text"
+              value="Ai hay bị bất tiện khi đi làm xa thì nhìn kỹ món nhỏ gọn này nha, giá cực kỳ dễ tiếp cận luôn."
+            >
+          </div>
+          <div class="field">
+            <label for="el-key-input">ElevenLabs API Key (chỉ cần nếu test giọng Adam chính chủ)</label>
+            <input
+              type="password"
+              id="el-key-input"
+              placeholder="Bỏ trống nếu test các giọng miễn phí & Adam Style"
+              autocomplete="off"
+            >
+          </div>
+        </div>
+
+        <div class="toolbar-row wrap">
+          <div class="filter-chips" role="group" aria-label="Lọc theo nhóm giọng">
+            <button type="button" class="chip active" data-filter="all">Tất cả (14)</button>
+            <button type="button" class="chip" data-filter="tiktok">🔥 TikTok &amp; Adam</button>
+            <button type="button" class="chip" data-filter="male">👨 Giọng Nam</button>
+            <button type="button" class="chip" data-filter="female">👩 Giọng Nữ</button>
+          </div>
+          <label class="inline-check">
+            <input type="checkbox" id="use-default-speed" checked>
+            <span>Dùng tốc độ tối ưu riêng của từng giọng</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section id="voices-grid" class="voices-grid" aria-live="polite"></section>
+  </main>
+
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+
+  <script src="/static/voices.js"></script>
+</body>
+</html>

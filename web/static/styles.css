@@ -468,3 +468,102 @@ audio {
 .hidden {
   display: none !important;
 }
+
+.nav-tabs {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.nav-tab {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+
+.nav-tab:hover {
+  color: var(--text);
+  background: var(--panel-2);
+}
+
+.nav-tab.active {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.14);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
+.voices-container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.voices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.voice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.voice-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.voice-title {
+  display: block;
+  font-size: 0.98rem;
+  margin-bottom: 4px;
+}
+
+.voice-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.hot-badge {
+  color: #fbbf24;
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.voice-card-desc {
+  min-height: 36px;
+}
+
+.voice-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}

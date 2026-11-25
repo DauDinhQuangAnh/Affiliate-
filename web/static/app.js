@@ -151,6 +151,12 @@ async function loadVoices() {
       opt.textContent = `${icon} ${v.key} (${v.default_speed}x)`;
       specificVoicesGroup.appendChild(opt);
     });
+    const params = new URLSearchParams(window.location.search);
+    const preselect = params.get("voice");
+    if (preselect && voicesMap[preselect]) {
+      voiceSelect.value = preselect;
+      updateVoiceDesc();
+    }
   } catch (err) {
     console.error("Không tải được danh sách giọng:", err);
   }

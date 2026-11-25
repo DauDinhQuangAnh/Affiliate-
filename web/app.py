@@ -48,9 +48,21 @@ class GenerateRequest(BaseModel):
     elevenlabs_key: str = Field(default="")
 
 
+class PreviewVoiceRequest(BaseModel):
+    voice: str = Field(..., min_length=1, max_length=60)
+    text: str = Field(..., min_length=1, max_length=1000)
+    speed: Optional[float] = Field(default=None, ge=0.8, le=1.6)
+    elevenlabs_key: str = Field(default="")
+
+
 @app.get("/")
 async def serve_index():
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/voices")
+async def serve_voices_page():
+    return FileResponse(STATIC_DIR / "voices.html")
 
 
 @app.get("/api/config")
@@ -229,12 +241,54 @@ async def api_generate(req: GenerateRequest):
     }
 
 
+@app.post("/api/preview-voice")
+async def api_preview_voice(req: PreviewVoiceRequest):
+    """Tạo file nghe thử ngắn cho 1 giọng vào output/_voice_previews/."""
+    voice_key, profile = tts_core.pick_voice(req.voice)
+    preview_dir = OUTPUT_DIR / "_voice_previews"
+    preview_dir.mkdir(parents=True, exist_ok=True)
+
+    txt_path = preview_dir / f"{voice_key}.txt"
+    mp3_path = preview_dir / f"{voice_key}.mp3"
+    txt_path.write_text(req.text.strip(), encoding="utf-8")
+
+    target_speed = req.speed if req.speed is not None else profile.get("default_speed", 1.25)
+
+    try:
+        await tts_core.generate_voice(
+            text_path=str(txt_path),
+            output_path=str(mp3_path),
+            voice_request=voice_key,
+            speed=target_speed,
+            engine_override="auto",
+            elevenlabs_key=req.elevenlabs_key.strip(),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Lỗi tạo preview giọng {voice_key}: {e}")
+
+    duration_sec = 0.0
+    try:
+        import soundfile as sf
+        data, sr = sf.read(str(mp3_path))
+        duration_sec = round(len(data) / sr, 2)
+    except Exception:
+        pass
+
+    ts = int(time.time())
+    return {
+        "voice": voice_key,
+        "speed": target_speed,
+        "duration_sec": duration_sec,
+        "audio_url": f"/output/_voice_previews/{voice_key}.mp3?t={ts}",
+    }
+
+
 @app.get("/api/projects")
 async def list_projects():
     projects = []
     if OUTPUT_DIR.exists():
         dirs = sorted(
-            [d for d in OUTPUT_DIR.iterdir() if d.is_dir()],
+            [d for d in OUTPUT_DIR.iterdir() if d.is_dir() and not d.name.startswith("_")],
             key=lambda p: p.stat().st_mtime,
             reverse=True,
         )
