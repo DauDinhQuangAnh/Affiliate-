@@ -496,11 +496,16 @@ btnNormalizeTts.addEventListener("click", async () => {
 
 ttsForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const targetSlug = activeSlug || toClientSlug(productNameInput.value.trim());
-  if (!targetSlug) {
-    showToast("Vui lòng nhập Tên sản phẩm ở bước 1 trước.");
-    productNameInput.focus();
+  const rawText = textInput.value.trim();
+  if (!rawText) {
+    showToast("Vui lòng nhập lời thoại ở mục 2.");
+    textInput.focus();
     return;
+  }
+  let targetSlug = activeSlug || toClientSlug(productNameInput.value.trim());
+  if (!targetSlug) {
+    const firstWords = rawText.split(/\s+/).slice(0, 4).join(" ");
+    targetSlug = toClientSlug(firstWords) || `voice-${Date.now()}`;
   }
 
   btnGenerate.disabled = true;
