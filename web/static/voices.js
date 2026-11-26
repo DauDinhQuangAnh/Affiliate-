@@ -1,5 +1,4 @@
 const sampleTextInput = document.getElementById("sample-text");
-const elKeyInput = document.getElementById("el-key-input");
 const voicesGrid = document.getElementById("voices-grid");
 const btnTestAll = document.getElementById("btn-test-all");
 const testProgress = document.getElementById("test-progress");
@@ -92,7 +91,6 @@ async function previewSingleVoice(card, voiceObj, autoPlay = true) {
         voice: voiceObj.key,
         text,
         speed: useDefaultSpeed.checked ? voiceObj.default_speed : 1.25,
-        elevenlabs_key: elKeyInput.value.trim(),
       }),
     });
     const data = await res.json();
@@ -149,10 +147,7 @@ document.querySelectorAll(".filter-chips .chip").forEach((chip) => {
   });
 });
 
-elKeyInput.value = localStorage.getItem("affiliate_elevenlabs_key") || "";
-elKeyInput.addEventListener("input", () => {
-  localStorage.setItem("affiliate_elevenlabs_key", elKeyInput.value.trim());
-});
+localStorage.removeItem("affiliate_elevenlabs_key");
 
 async function init() {
   try {

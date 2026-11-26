@@ -55,6 +55,11 @@ class PreviewVoiceRequest(BaseModel):
     elevenlabs_key: str = Field(default="")
 
 
+def _reload_env():
+    """Đọc lại file .env ở thư mục gốc dự án để nhận key mới ngay lập tức."""
+    tts_core._load_dotenv()
+
+
 @app.get("/")
 async def serve_index():
     return FileResponse(STATIC_DIR / "index.html")
@@ -67,9 +72,15 @@ async def serve_voices_page():
 
 @app.get("/api/config")
 async def get_config():
-    """Kiểm tra xem server đã có sẵn biến môi trường GEMINI_API_KEY chưa."""
-    has_env_key = bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"))
-    return {"has_env_key": has_env_key}
+    """Kiểm tra trạng thái API key trong .env / biến môi trường (chỉ trả boolean)."""
+    _reload_env()
+    has_gemini = bool(os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"))
+    has_elevenlabs = bool(os.environ.get("ELEVENLABS_API_KEY"))
+    return {
+        "has_env_key": has_gemini,
+        "has_gemini_key": has_gemini,
+        "has_elevenlabs_key": has_elevenlabs,
+    }
 
 
 @app.get("/api/hooks")
@@ -98,14 +109,14 @@ async def api_build_script(
     pain_point: str = Form(""),
     highlights: str = Form(""),
     hook_id: str = Form("auto"),
-    api_key: str = Form(""),
     image: Optional[UploadFile] = File(None),
 ):
     """
     Sinh kịch bản theo đúng flow SKILL.md:
-    - Nếu có Gemini API Key (từ form hoặc env): dùng AI Vision + Google Search.
-    - Nếu chưa có Key: fallback sang Smart Template Builder nội bộ và báo rõ chế độ.
+    - Nếu có GEMINI_API_KEY trong .env: dùng AI Vision + Google Search.
+    - Nếu chưa có Key: fallback sang Smart Template Builder nội bộ.
     """
+    _reload_env()
     clean_name = product_name.strip()
     if not clean_name:
         raise HTTPException(status_code=400, detail="Vui lòng nhập tên sản phẩm.")
@@ -123,7 +134,7 @@ async def api_build_script(
             ext = Path(image.filename).suffix or ".jpg"
             (project_dir / f"product{ext}").write_bytes(image_bytes)
 
-    effective_key = api_key.strip() or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or ""
+    effective_key = (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "").strip()
 
     if effective_key:
         notes_combined = "\n".join(filter(None, [
@@ -186,6 +197,7 @@ async def normalize_tts(req: TextRequest):
 
 @app.post("/api/generate")
 async def api_generate(req: GenerateRequest):
+    _reload_env()
     safe_slug = script_engine.slugify(req.slug)
     project_dir = OUTPUT_DIR / safe_slug
     project_dir.mkdir(parents=True, exist_ok=True)
@@ -244,6 +256,7 @@ async def api_generate(req: GenerateRequest):
 @app.post("/api/preview-voice")
 async def api_preview_voice(req: PreviewVoiceRequest):
     """Tạo file nghe thử ngắn cho 1 giọng vào output/_voice_previews/."""
+    _reload_env()
     voice_key, profile = tts_core.pick_voice(req.voice)
     preview_dir = OUTPUT_DIR / "_voice_previews"
     preview_dir.mkdir(parents=True, exist_ok=True)

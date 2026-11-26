@@ -12,9 +12,29 @@ Tính năng nổi bật:
 import argparse
 import asyncio
 import os
+from pathlib import Path
 import random
 import sys
 import numpy as np
+
+
+def _load_dotenv():
+    """Nạp biến môi trường từ file .env ở thư mục gốc dự án (nếu có)."""
+    env_path = Path(__file__).resolve().parent.parent / ".env"
+    if not env_path.exists():
+        return
+    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        k = k.strip()
+        v = v.strip().strip('"').strip("'")
+        if k and v:
+            os.environ[k] = v
+
+
+_load_dotenv()
 
 
 # ==============================================================================

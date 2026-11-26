@@ -1,6 +1,4 @@
 const btnNewProject = document.getElementById("btn-new-project");
-const apiKeyInput = document.getElementById("api-key-input");
-const elevenlabsKeyInput = document.getElementById("elevenlabs-key-input");
 const aiStatusPill = document.getElementById("ai-status-pill");
 const aiStatusText = document.getElementById("ai-status-text");
 
@@ -74,13 +72,12 @@ function toClientSlug(str) {
 
 function updateAiStatusBadge() {
   const dot = aiStatusPill.querySelector(".dot");
-  const hasKey = hasServerKey || apiKeyInput.value.trim().length > 10;
-  if (hasKey) {
+  if (hasServerKey) {
     dot.classList.remove("warn");
-    aiStatusText.textContent = "AI Vision + Google Search Sẵn sàng";
+    aiStatusText.textContent = "AI Vision + Search (.env Sẵn sàng)";
   } else {
     dot.classList.add("warn");
-    aiStatusText.textContent = "Chưa có AI Key (đang dùng Template)";
+    aiStatusText.textContent = "Chưa điền GEMINI_API_KEY trong .env (Template)";
   }
 }
 
@@ -109,14 +106,12 @@ function setSpeed(val) {
 }
 
 async function loadConfig() {
-  const savedKey = localStorage.getItem("affiliate_gemini_key") || "";
-  if (savedKey) apiKeyInput.value = savedKey;
-  const savedElKey = localStorage.getItem("affiliate_elevenlabs_key") || "";
-  if (savedElKey) elevenlabsKeyInput.value = savedElKey;
+  localStorage.removeItem("affiliate_gemini_key");
+  localStorage.removeItem("affiliate_elevenlabs_key");
   try {
     const res = await fetch("/api/config");
     const data = await res.json();
-    hasServerKey = Boolean(data.has_env_key);
+    hasServerKey = Boolean(data.has_gemini_key ?? data.has_env_key);
   } catch {
     hasServerKey = false;
   }
@@ -298,15 +293,6 @@ function resetWorkspace() {
   updateWordCounter();
 }
 
-apiKeyInput.addEventListener("input", () => {
-  localStorage.setItem("affiliate_gemini_key", apiKeyInput.value.trim());
-  updateAiStatusBadge();
-});
-
-elevenlabsKeyInput.addEventListener("input", () => {
-  localStorage.setItem("affiliate_elevenlabs_key", elevenlabsKeyInput.value.trim());
-});
-
 imageInput.addEventListener("change", () => {
   const file = imageInput.files[0];
   if (file) {
@@ -329,8 +315,7 @@ scriptForm.addEventListener("submit", async (e) => {
   if (!productName) return;
 
   btnBuildScript.disabled = true;
-  const usingAi = hasServerKey || apiKeyInput.value.trim().length > 10;
-  btnBuildScript.textContent = usingAi
+  btnBuildScript.textContent = hasServerKey
     ? "⏳ AI đang phân tích ảnh, search & viết kịch bản..."
     : "⏳ Đang tạo kịch bản từ Template...";
 
@@ -340,7 +325,6 @@ scriptForm.addEventListener("submit", async (e) => {
   formData.append("pain_point", painInput.value.trim());
   formData.append("highlights", highlightsInput.value.trim());
   formData.append("hook_id", hookSelect.value || "auto");
-  formData.append("api_key", apiKeyInput.value.trim());
   if (imageInput.files[0]) {
     formData.append("image", imageInput.files[0]);
   }
@@ -465,7 +449,6 @@ ttsForm.addEventListener("submit", async (e) => {
         text: textInput.value,
         voice: voiceSelect.value,
         speed: parseFloat(speedRange.value),
-        elevenlabs_key: elevenlabsKeyInput.value.trim(),
       }),
     });
 
