@@ -88,6 +88,71 @@ async def get_hooks():
     return {"hooks": script_engine.HOOK_TEMPLATES}
 
 
+@app.post("/api/suggest-hooks")
+async def api_suggest_hooks(
+    product_name: str = Form(...),
+    price_text: str = Form(""),
+    pain_point: str = Form(""),
+    highlights: str = Form(""),
+    image: Optional[UploadFile] = File(None),
+):
+    """Dùng AI (hoặc matching thông minh) gợi ý Top 3 Hook phù hợp nhất cho sản phẩm."""
+    _reload_env()
+    clean_name = product_name.strip()
+    if not clean_name:
+        raise HTTPException(status_code=400, detail="Vui lòng nhập tên sản phẩm trước.")
+
+    image_bytes = None
+    image_mime = "image/jpeg"
+    if image and image.filename:
+        image_bytes = await image.read()
+        if image_bytes:
+            image_mime = image.content_type or "image/jpeg"
+
+    effective_key = (os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "").strip()
+    if effective_key:
+        notes_combined = "\n".join(filter(None, [
+            f"Nỗi đau: {pain_point.strip()}" if pain_point.strip() else "",
+            f"Điểm nổi bật: {highlights.strip()}" if highlights.strip() else "",
+        ]))
+        try:
+            suggestions = ai_generator.suggest_hooks_with_ai(
+                api_key=effective_key,
+                product_name=clean_name,
+                price_text=price_text.strip(),
+                notes=notes_combined,
+                image_bytes=image_bytes,
+                image_mime=image_mime,
+            )
+            return {"mode": "ai-gemini", "suggestions": suggestions}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Lỗi AI gợi ý Hook: {e}")
+
+    # Fallback chấm điểm theo từ khóa nếu chưa có Gemini Key
+    lower_name = (clean_name + " " + pain_point + " " + highlights).lower()
+    scored = []
+    for h in script_engine.HOOK_TEMPLATES:
+        score = 75
+        for kw in h["best_for"].lower().replace(",", " ").split():
+            if len(kw) > 2 and kw in lower_name:
+                score += 6
+        scored.append({
+            "id": h["id"],
+            "group": h["group"],
+            "label": h["label"],
+            "score": min(score, 95),
+            "reason": f"Phù hợp nhóm sản phẩm: {h['best_for']}",
+            "sample_hook": h["template"].format(
+                product=clean_name,
+                pain=pain_point.strip() or "bất tiện hằng ngày",
+                detail_1=highlights.split(",")[0].strip() if highlights.strip() else "thiết kế gọn tiện",
+                price_spoken=price_text.strip() or "rất mềm",
+            ),
+        })
+    scored.sort(key=lambda x: x["score"], reverse=True)
+    return {"mode": "keyword-fallback", "suggestions": scored[:3]}
+
+
 @app.get("/api/voices")
 async def get_voices():
     voices = []

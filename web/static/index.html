@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Affiliate Voice &amp; Script Studio</title>
-  <link rel="stylesheet" href="/static/styles.css?v=2.4">
+  <link rel="stylesheet" href="/static/styles.css?v=2.5">
 </head>
 <body>
   <header class="topbar">
@@ -67,9 +67,12 @@
               <img id="image-preview" class="image-preview hidden" alt="Xem trước ảnh sản phẩm">
             </div>
             <div class="field">
-              <label for="hook-select">Công thức Hook mở đầu</label>
+              <div class="label-row">
+                <label for="hook-select">Công thức Hook mở đầu (20 mẫu thịnh hành)</label>
+                <button type="button" id="btn-suggest-hooks" class="btn-ghost">🎯 AI Gợi ý Hook hợp SP</button>
+              </div>
               <select id="hook-select">
-                <option value="auto" selected>✨ AI tự chọn Hook phù hợp nhất (12 mẫu)</option>
+                <option value="auto" selected>✨ AI tự chọn Hook phù hợp nhất (20 mẫu)</option>
               </select>
               <label for="pain-input" style="margin-top:6px">Ghi chú / Nỗi đau khách hàng (tùy chọn)</label>
               <input
@@ -78,6 +81,14 @@
                 placeholder="VD: hay làm rơi máy trầy viền, bám mồ hôi tay"
               >
             </div>
+          </div>
+
+          <div id="hook-suggestions-box" class="suggestions-box hidden">
+            <div class="label-row">
+              <strong>🎯 Top 3 Hook phù hợp nhất cho sản phẩm này:</strong>
+              <button type="button" id="btn-close-suggestions" class="btn-ghost">Ẩn</button>
+            </div>
+            <div id="hook-suggestions-list" class="suggestions-list"></div>
           </div>
 
           <div class="field">
@@ -214,6 +225,6 @@
 
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="/static/app.js?v=2.4"></script>
+  <script src="/static/app.js?v=2.5"></script>
 </body>
 </html>

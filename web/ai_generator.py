@@ -125,3 +125,90 @@ TÀI LIỆU SKILL THAM CHIẾU:
         "word_count": word_count,
         "mode": "ai-gemini",
     }
+
+
+def suggest_hooks_with_ai(
+    api_key: str,
+    product_name: str,
+    price_text: str = "",
+    notes: str = "",
+    image_bytes: Optional[bytes] = None,
+    image_mime: str = "image/jpeg",
+    model_name: str = "gemini-2.5-flash",
+) -> list:
+    """
+    Dùng Gemini Vision + Google Search để phân tích sản phẩm và chọn ra
+    Top 3 công thức Hook thịnh hành phù hợp nhất trong 20 mẫu.
+    """
+    import json
+    from google import genai
+    from google.genai import types
+
+    key = (api_key or os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or "").strip()
+    if not key:
+        raise ValueError("Chưa có Gemini API Key.")
+
+    hooks_catalog = "\n".join(
+        f"- id: {h['id']} | nhóm: {h['group']} | mẫu: {h['label']} | hợp với: {h['best_for']}"
+        for h in script_engine.HOOK_TEMPLATES
+    )
+
+    prompt = f"""Bạn là chuyên gia chiến lược TikTok Shop Affiliate.
+Hãy phân tích sản phẩm dưới đây (kèm ảnh nếu có) và chọn ra **ĐÚNG 3 công thức Hook phù hợp nhất** trong danh sách 20 mẫu Hook thịnh hành bên dưới để tối ưu tỷ lệ giữ chân 3 giây đầu.
+
+- Sản phẩm: {product_name}
+- Mức giá: {price_text or "Chưa rõ"}
+- Ghi chú: {notes or "Không có"}
+
+DANH SÁCH 20 HOOK THỊNH HÀNH:
+{hooks_catalog}
+
+YÊU CẦU: Trả về DUY NHẤT một mảng JSON hợp lệ (không giải thích thêm, không bọc markdown ```json) gồm 3 phần tử theo thứ tự phù hợp từ cao xuống thấp:
+[
+  {{
+    "id": "id_hook_trong_danh_sach",
+    "score": 96,
+    "reason": "Giải thích ngắn gọn 1 câu vì sao sản phẩm này hợp với Hook này",
+    "sample_hook": "Câu Hook viết sẵn cụ thể cho sản phẩm (dưới 18 chữ, sạch từ cấm)"
+  }}
+]
+"""
+
+    contents = []
+    if image_bytes:
+        contents.append(types.Part.from_bytes(data=image_bytes, mime_type=image_mime))
+    contents.append(prompt)
+
+    client = genai.Client(api_key=key)
+    response = client.models.generate_content(
+        model=model_name,
+        contents=contents,
+        config=types.GenerateContentConfig(
+            tools=[{"google_search": {}}],
+            temperature=0.4,
+        ),
+    )
+
+    raw = (response.text or "").strip()
+    # Trích xuất đoạn JSON [...] an toàn
+    start = raw.find("[")
+    end = raw.rfind("]")
+    if start == -1 or end == -1:
+        raise RuntimeError("AI không trả về mảng JSON hợp lệ.")
+    parsed = json.loads(raw[start : end + 1])
+
+    valid_ids = {h["id"]: h for h in script_engine.HOOK_TEMPLATES}
+    suggestions = []
+    for item in parsed:
+        hid = item.get("id")
+        if hid in valid_ids:
+            safe_sample, _ = script_engine.auto_fix_banned_words(item.get("sample_hook", ""))
+            suggestions.append({
+                "id": hid,
+                "group": valid_ids[hid]["group"],
+                "label": valid_ids[hid]["label"],
+                "score": int(item.get("score", 90)),
+                "reason": item.get("reason", ""),
+                "sample_hook": safe_sample,
+            })
+    return suggestions[:3]

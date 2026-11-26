@@ -12,6 +12,10 @@ const hookSelect = document.getElementById("hook-select");
 const highlightsInput = document.getElementById("highlights-input");
 const slugPreview = document.getElementById("slug-preview");
 const btnBuildScript = document.getElementById("btn-build-script");
+const btnSuggestHooks = document.getElementById("btn-suggest-hooks");
+const hookSuggestionsBox = document.getElementById("hook-suggestions-box");
+const hookSuggestionsList = document.getElementById("hook-suggestions-list");
+const btnCloseSuggestions = document.getElementById("btn-close-suggestions");
 
 const ttsForm = document.getElementById("tts-form");
 const textInput = document.getElementById("text-input");
@@ -305,8 +309,70 @@ imageInput.addEventListener("change", () => {
 
 btnNewProject.addEventListener("click", () => {
   resetWorkspace();
+  hookSuggestionsBox.classList.add("hidden");
   productNameInput.focus();
   showToast("Đã làm mới để nhập sản phẩm mới.");
+});
+
+btnCloseSuggestions.addEventListener("click", () => {
+  hookSuggestionsBox.classList.add("hidden");
+});
+
+btnSuggestHooks.addEventListener("click", async () => {
+  const productName = productNameInput.value.trim();
+  if (!productName) {
+    showToast("Vui lòng nhập Tên sản phẩm trước khi nhờ AI gợi ý Hook.");
+    productNameInput.focus();
+    return;
+  }
+
+  btnSuggestHooks.disabled = true;
+  btnSuggestHooks.textContent = "⏳ AI đang phân tích...";
+
+  const formData = new FormData();
+  formData.append("product_name", productName);
+  formData.append("price_text", priceInput.value.trim());
+  formData.append("pain_point", painInput.value.trim());
+  formData.append("highlights", highlightsInput.value.trim());
+  if (imageInput.files[0]) {
+    formData.append("image", imageInput.files[0]);
+  }
+
+  try {
+    const res = await fetch("/api/suggest-hooks", { method: "POST", body: formData });
+    const data = await res.json();
+    if (!res.ok) {
+      showToast(data.detail || "Không gợi ý được Hook.");
+      return;
+    }
+
+    hookSuggestionsList.innerHTML = "";
+    data.suggestions.forEach((s) => {
+      const card = document.createElement("div");
+      card.className = "suggestion-item";
+      card.innerHTML = `
+        <div>
+          <strong>[${s.group}] • Độ hợp ${s.score}%</strong>
+          <p class="suggestion-sample">"${s.sample_hook}"</p>
+          <p>${s.reason}</p>
+        </div>
+        <button type="button" class="btn-secondary">Chọn Hook này</button>
+      `;
+      card.querySelector("button").addEventListener("click", () => {
+        hookSelect.value = s.id;
+        showToast(`Đã chọn Hook [${s.group}] (${s.id}). Bấm "AI Tạo Kịch bản" để viết trọn bài!`);
+      });
+      hookSuggestionsList.appendChild(card);
+    });
+
+    hookSuggestionsBox.classList.remove("hidden");
+    showToast("AI đã phân tích xong Top 3 Hook phù hợp nhất!");
+  } catch {
+    showToast("Lỗi kết nối khi phân tích Hook.");
+  } finally {
+    btnSuggestHooks.disabled = false;
+    btnSuggestHooks.textContent = "🎯 AI Gợi ý Hook hợp SP";
+  }
 });
 
 scriptForm.addEventListener("submit", async (e) => {

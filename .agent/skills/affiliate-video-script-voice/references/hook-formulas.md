@@ -1,59 +1,73 @@
-# Bộ công thức Hook mở đầu (3–5 giây đầu)
+# Bộ 20 công thức Hook mở đầu thịnh hành (3 giây đầu)
 
-Chọn 1 công thức phù hợp nhất với đặc tính sản phẩm. Hook phải đi kèm hành động trực quan (Visual) ngay giây đầu tiên để giữ chân người xem lướt qua trên TikTok Shop và Shopee Video.
-
----
-
-## Nhóm 1: Đánh thẳng vào nỗi đau (Đồ gia dụng, phụ kiện tiện ích, đời sống)
-
-1. **"Ai hay bị [nỗi đau/sự bất tiện] thì nhìn kỹ cái này nha..."**
-   - *Visual:* Quay cận cảnh tình huống bất tiện thường ngày (ví dụ: dây điện rối, góc tường bẩn, đồ đạc lộn xộn), sau đó chuyển ngay góc máy sang sản phẩm giải quyết vấn đề.
-
-2. **"Trước giờ mình cứ tưởng [cách làm cũ/sản phẩm cũ] là bình thường, cho tới khi thử em này."**
-   - *Visual:* Đặt đồ cũ và sản phẩm mới cạnh nhau để thấy ngay sự khác biệt về kích thước, độ tiện dụng hoặc độ hoàn thiện.
-
-3. **"Bỏ ngay kiểu [thói quen bất tiện/cũ kỹ] đi mọi người ơi, giờ người ta dùng loại này hết rồi."**
-   - *Visual:* Tay gạt đồ cũ hoặc vật dụng cồng kềnh ra ngoài khung hình, đặt sản phẩm mới vào chính giữa khung hình.
+Áp dụng nguyên tắc **Hook 3 lớp**: Visual hành động ngay mili-giây đầu tiên + Text Overlay ngắn (4–7 chữ) + Verbal Hook dứt khoát. Tất cả các mẫu dưới đây đã được tinh chỉnh an toàn theo chính sách TikTok Shop / Shopee Video.
 
 ---
 
-## Nhóm 2: Gây tò mò / Lật ngược kỳ vọng (Đồ công nghệ, đồ thông minh, sản phẩm độc lạ)
+## Nhóm 1: Đánh thẳng nỗi đau & Cảnh báo (Gia dụng, Tiện ích, Đời sống)
 
-4. **"Nhìn bên ngoài tưởng [nhận xét bình thường/tầm thường], nhưng lúc bấm thử mới thấy nó xịn thật sự."**
-   - *Visual:* Quay góc bình thường 1 giây đầu, sau đó thao tác bấm nút kích hoạt tính năng ăn tiền nhất (đèn sáng, động cơ chạy, biến hình).
-
-5. **"Mình mua em này chỉ vì [lý do đơn giản], ai ngờ cái làm mình bất ngờ nhất lại là [tính năng phụ hay ho]."**
-   - *Visual:* Cầm sản phẩm xoay nhẹ trên tay, zoom cận cảnh vào chi tiết hoặc tính năng bất ngờ đó.
-
-6. **"Không hiểu sao món nhỏ xíu như này mà giải quyết được đúng chỗ mình khó chịu bấy lâu nay."**
-   - *Visual:* Cầm gọn sản phẩm trong lòng bàn tay để người xem thấy rõ kích thước nhỏ gọn so với hiệu năng thực tế.
-
----
-
-## Nhóm 3: Trải nghiệm thật / Review thẳng thắn (Mỹ phẩm, thời trang, đồ cá nhân)
-
-7. **"Dùng thử [sản phẩm] được mấy hôm rồi, nay nói thật cả điểm thích lẫn điểm chưa ưng cho mọi người đỡ mất công tìm."**
-   - *Visual:* Quay cận bề mặt sản phẩm đã bóc hộp, có dấu hiệu đang sử dụng thực tế (không phải hàng mới tinh vừa unbox).
-
-8. **"Bác nào đang phân vân em [tên sản phẩm] thì khoan đặt vội, xem kỹ chi tiết này trước đã."**
-   - *Visual:* Zoom sát vào chất liệu, đường may, đầu cọ hoặc kết cấu sản phẩm để tăng độ uy tín và tính khách quan.
+1. **`pain-1`** — **"Ai hay bị [nỗi đau] thì nhìn kỹ cái này nha."**
+   - *Visual:* Quay cận cảnh tình huống bất tiện thường ngày, chuyển ngay sang sản phẩm.
+2. **`pain-2`** — **"Trước giờ mình cứ tưởng dùng loại cũ là bình thường, cho tới khi thử em này."**
+   - *Visual:* Đặt đồ cũ và sản phẩm mới cạnh nhau để thấy rõ sự khác biệt.
+3. **`pain-3`** — **"Bỏ ngay kiểu dùng đồ cũ cồng kềnh đi mọi người ơi, giờ người ta chuyển qua loại này hết rồi."**
+   - *Visual:* Tay gạt đồ cũ ra ngoài khung hình, đặt sản phẩm mới vào giữa.
+4. **`pain-warn`** — **"Khoan mua [tên sản phẩm] nếu bạn vẫn chưa biết chi tiết quan trọng này."**
+   - *Visual:* Giơ tay ra hiệu dừng lại, zoom thẳng vào chi tiết ăn tiền nhất của sản phẩm.
 
 ---
 
-## Nhóm 4: So sánh giá trị / Độ hời (Sản phẩm giá mềm, đồ gia dụng, dễ chốt đơn)
+## Nhóm 2: Phản biện / Phá vỡ định kiến (Công nghệ, Thời trang, Skincare)
 
-9. **"Chưa tới [mốc giá/so sánh vui như 2 ly trà sữa] mà cầm trên tay chắc chắn ngoài mong đợi luôn."**
-   - *Visual:* Gõ nhẹ hoặc bóp thử sản phẩm để người xem nghe âm thanh thực tế hoặc thấy rõ độ cứng cáp, chắc chắn.
-
-10. **"Tìm mãi mới ra một em [loại sản phẩm] vừa gọn, vừa [lợi ích chính] mà giá lại dễ tiếp cận."**
-    - *Visual:* Đặt sản phẩm vào đúng không gian sử dụng thực tế (bàn làm việc, góc bếp, túi xách đi làm).
+5. **`contrarian-1`** — **"Nhiều người cứ nghĩ [quan niệm cũ] là ổn, nhưng dùng thử cái này mới thấy khác hẳn."**
+   - *Visual:* Lắc đầu nhẹ trước cách làm cũ, sau đó thao tác trực tiếp bằng sản phẩm mới.
+6. **`contrarian-2`** — **"Không cần chi tiền triệu cho [đồ đắt tiền], mẫu này giá mềm hơn nhiều mà trải nghiệm rất ổn."**
+   - *Visual:* Đặt sản phẩm gọn đẹp lên bàn, xoay nhẹ khoe độ hoàn thiện.
+7. **`contrarian-3`** — **"Mọi người hay hiểu nhầm về [tính năng sản phẩm], sự thật khi cầm trên tay là như này đây."**
+   - *Visual:* Cầm sát sản phẩm trước ống kính, test trực tiếp tính năng gây tranh cãi.
 
 ---
 
-## Nhóm 5: Gọi đúng tệp khách hàng (Sản phẩm ngách, văn phòng, mẹ bé)
+## Nhóm 3: Gây tò mò / Lật ngược kỳ vọng (Đồ hay ho, Phụ kiện, Công nghệ)
 
-11. **"Dân văn phòng / sinh viên / mấy bác hay đi xa nhất định phải thủ sẵn một cái này trong balo."**
-    - *Visual:* Động tác mở balo/túi xách lấy sản phẩm ra và sử dụng ngay lập tức trong bối cảnh thực tế.
+8. **`curious-4`** — **"Nhìn bên ngoài tưởng bình thường, nhưng lúc bấm thử mới thấy nó tiện thật sự."**
+   - *Visual:* Quay góc bình thường 1 giây đầu, sau đó kích hoạt tính năng nổi bật nhất.
+9. **`curious-5`** — **"Mình mua em này chỉ vì nhìn gọn đẹp, ai ngờ cái làm mình bất ngờ nhất lại là [tính năng phụ]."**
+   - *Visual:* Xoay nhẹ sản phẩm và zoom cận vào tính năng bất ngờ.
+10. **`curious-6`** — **"Không hiểu sao món nhỏ xíu như này mà giải quyết được đúng chỗ mình khó chịu bấy lâu nay."**
+    - *Visual:* Cầm gọn sản phẩm trong lòng bàn tay để thấy kích thước thực tế.
+11. **`curious-guess`** — **"Đố mọi người món nhìn sang xịn mịn như này giá bao nhiêu? Mềm hơn bạn nghĩ nhiều luôn."**
+    - *Visual:* Quay góc ánh sáng đẹp làm nổi bật chất liệu sản phẩm.
 
-12. **"Nhà nào có [đối tượng: bé nhỏ / thú cưng / không gian hẹp] thì xem hết clip này, tiện cực kỳ."**
-    - *Visual:* Quay sản phẩm đặt đúng trong bối cảnh (phòng ngủ bé, góc nuôi thú cưng, căn hộ chung cư nhỏ).
+---
+
+## Nhóm 4: Chứng minh kết quả trước / Thử thách (Làm đẹp, Gia dụng, Vệ sinh)
+
+12. **`proof-1`** — **"Đây là kết quả sau mấy hôm dùng thử [tên sản phẩm], nhìn phát thấy khác liền."**
+    - *Visual:* Đưa kết quả thực tế (bề mặt sạch bóng, tóc/da, góc bàn gọn) lên ngay giây đầu tiên.
+13. **`proof-test`** — **"Thử test độ bền và khả năng thực tế của [tên sản phẩm] xem có ổn như lời đồn không nha."**
+    - *Visual:* Thực hiện bài test trực quan ngay giây đầu (đổ nước, thả nhẹ, đo lực gió, kéo giãn).
+14. **`review-7`** — **"Dùng thử [sản phẩm] được mấy hôm rồi, nay nói thật cả điểm thích lẫn điểm chưa ưng cho mọi người đỡ mất công tìm."**
+    - *Visual:* Quay sản phẩm đã bóc hộp đang sử dụng thật trên bàn.
+15. **`review-8`** — **"Bác nào đang phân vân em [tên sản phẩm] thì xem kỹ chất liệu thực tế này trước khi đặt nha."**
+    - *Visual:* Zoom sát vào đường may, bề mặt nhám, đầu cọ hoặc cổng kết nối.
+
+---
+
+## Nhóm 5: So sánh giá trị / Độ hời & Social Proof (Sản phẩm dễ chốt đơn)
+
+16. **`value-9`** — **"Chưa tới tiền hai ly trà sữa mà cầm [tên sản phẩm] trên tay chắc chắn ngoài mong đợi luôn."**
+    - *Visual:* Gõ nhẹ hoặc bóp thử sản phẩm để nghe âm thanh chắc chắn.
+17. **`value-10`** — **"Tìm mãi mới ra một em [tên sản phẩm] vừa gọn, vừa tiện mà mức giá lại cực kỳ dễ tiếp cận."**
+    - *Visual:* Đặt sản phẩm vào đúng không gian sử dụng (bàn làm việc, góc bếp, xe).
+18. **`trend-fomo`** — **"Món đồ đang được săn lùng nhiều tuần qua trên giỏ hàng, nay mới kịp về tay để rì viu cho mọi người."**
+    - *Visual:* Khui hộp hoặc bóc seal nhanh gọn ngay 2 giây đầu.
+
+---
+
+## Nhóm 6: Gọi đúng tệp khách hàng (Sản phẩm ngách)
+
+19. **`niche-11`** — **"Dân văn phòng hay mấy bạn hay đi làm xa nhất định phải thủ sẵn một em này trong ba lô."**
+    - *Visual:* Mở ba lô hoặc túi xách lấy sản phẩm ra dùng ngay.
+20. **`niche-12`** — **"Nhà nào có không gian nhỏ, bé nhỏ hoặc thú cưng thì xem hết clip này, tiện cực kỳ."**
+    - *Visual:* Quay sản phẩm đặt đúng trong bối cảnh sinh hoạt thực tế đó.
